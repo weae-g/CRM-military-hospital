@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ВПД</title>
+    <link rel="icon" href="/img/logoV3.png" type="image/png">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/bootstrap-datepicker.min.css">
+    
+    <style>
+  /* Стили для общего оформления */
+  body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f4f4;
+        color: #333;
+    }
+
+    h1 {
+        color: #007bff;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Стили для кнопок */
+    button {
+        border-radius: 5px;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+
+    .btn-edit {
+        background-color: #ffc107;
+        border-color: #ffc107;
+    }
+
+    /* Стили для таблицы */
+    table {
+        width: 100% !important;
+
+        word-wrap: break-word;
+        margin-bottom: 20px;
+        overflow: auto;
+    }
+
+    table thead {
+        background-color: #343a40;
+        color: #fff;
+    }
+
+    table tbody tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+
+    table tbody tr:hover {
+        background-color: #e9ecef;
+    }
+
+    /* Стили для форм */
+    .form-control {
+        border-radius: 5px;
+    }
+
+    /* Стили для поиска */
+    #search {
+        margin-bottom: 15px;
+        padding: 10px;
+        font-size: 1rem;
+    }
+
+    /* Стили для модальных окон */
+    .modal-header {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .modal-title {
+        margin: 0 auto;
+    }
+
+    .modal-content {
+        border-radius: 10px;
+    }
+
+    /* Стили для datepicker */
+    .datepicker-container {
+        flex: 1; 
+    }
+
+    #datepicker {
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+    }
+     /* Уменьшение размера кнопки "Сгенерировать отчет" */
+     #reportForm {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Расстояние между элементами */
+}
+
+        /* Адаптивность таблицы */
+        .table-responsive {
+            max-width: 100% !important;
+            overflow-x: auto; /* Горизонтальная прокрутка при переполнении */
+            margin-bottom: 15px;
+            font-style: normal !important;
+        }
+
+        /* Стили для таблицы, чтобы она выглядела хорошо даже при переполнении */
+        table.table-bordered {
+
+            width: 100% !important;
+        }
+
+        /* Дополнительные стили для ячеек */
+        th, td {
+            vertical-align: middle; /* Центровка содержимого по вертикали */
+            text-align: center; /* Центровка содержимого по горизонтали */
+        }
+        div {
+            padding-left: 5px !important;
+        }
+    </style>
+    
+
+    
+    
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+
+    {% block content %}
+    <div class="container mt-3">
+        <h1>Данные о воинских перевозочных документах</h1>
+        <!-- Кнопка экспорта -->
+        <button class="btn btn-success" id="exportButton">Экспорт в Excel</button>
+        <div>
+            Общее количество записей: <span id="total-count">{{ vpd_records|length }}</span>
+        </div>
+     
+        <form id="reportForm">
+            <div class="datepicker-container">
+                <input type="text" id="datepicker" placeholder="Выберите дату">
+            </div>
+            <button class="btn btn-primary btn-sm" type="submit">Сгенерировать отчет</button>
+            <button id="resetFilters" class="btn btn-secondary btn-sm" type="button">Сбросить фильтры</button>
+        </form>
+
+   
+        <div class="mb-2">
+            <input type="text" id="search" class="form-control" placeholder="Найти по ФИО или воинской части">
+        </div>
+        <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addVPDModal">Добавить новое предписание</button>
+        
+        <div id="vpd-results" class="table-responsive">
+            <!-- Пустая таблица, которая будет заполняться данными -->
+            <table class="table table-bordered w-100">
+                <thead class="table-dark">
+                    <tr>
+                        <th>№ п/п</th>
+                        <th>Воинское звание</th>
+                        <th>ФИО</th>
+                        <th>Дата убытия</th>    
+                        <th>Полагать убывшим в</th>
+                        <th>Полагать прибывшим в</th>
+                        <th>Воинская часть военнослужащего</th>
+                        <th>Основа службы</th>
+                        <th>Время создания предписания</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="vpd-table-body">
+                    <!-- Таблица будет обновляться данными -->
+                </tbody>
+            </table>
+        </div>
+
+
+    </div>
+
+
+    <!-- Modal for Adding New Record -->
+    <div class="modal fade" id="addVPDModal" tabindex="-1" aria-labelledby="addVPDModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addVPDModalLabel">Добавить новое предписание</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-vpd-form" method="post" action="/vpd/add-vpd/">
+                        <div class="mb-3">
+                            <label for="military_rank" class="form-label">Воинское звание</label>
+                            <input type="text" class="form-control" id="military_rank" list="ranks" name="military_rank">
+                            <datalist id="ranks">
+                                <option value="Рядовому">
+                                    <option value="Матросу">
+                                    <option value="Ефрейтору">
+                                    <option value="Старшему матросу">
+                                    <option value="Младшему сержанту">
+                                    <option value="Старшине 2-й статьи">
+                                    <option value="Сержанту">
+                                    <option value="Старшине 1-й статьи">
+                                    <option value="Старшему сержанту">
+                                    <option value="Главному старшине">
+                                    <option value="Старшине">
+                                    <option value="Главному корабельному старшине">
+                                    <option value="Прапорщику">
+                                    <option value="Мичману">
+                                    <option value="Старшему прапорщику">
+                                    <option value="Старшему мичману">
+                                    <option value="Младшему лейтенанту">
+                                    <option value="Лейтенанту">
+                                    <option value="Старшему лейтенанту">
+                                    <option value="Капитану">
+                                    <option value="Капитан-лейтенанту">
+                                    <option value="Майору">
+                                    <option value="Капитану III ранга">
+                                    <option value="Подполковнику">
+                                    <option value="Капитану II ранга">
+                                    <option value="Полковнику">
+                                    <option value="Капитану 1-го ранга">
+                                    <option value="Генерал-майору">
+                                    <option value="Контр-адмиралу">
+                                    <option value="Генерал-лейтенанту">
+                                    <option value="Вице-адмиралу">
+                                    <option value="Генерал-полковнику">
+                                    <option value="Адмиралу">
+                                    <option value="Генералу армии">
+                                    <option value="Адмиралу флота, маршалу рода войск">
+                                    <option value="Главному маршалу рода войск">
+                                    <option value="Маршалу Советского Союза">
+                                    <option value="Адмиралу Флота Советского Союза">
+                                    <option value="Действительному государственному советнику таможенной службы">
+                                    <option value="Государственному советнику таможенной службы 1 ранга">
+                                    <option value="Государственному советнику таможенной службы II ранга">
+                                    <option value="Государственному советнику таможенной службы III ранга">
+                                    <option value="Советнику таможенной службы 1 ранга">
+                                    <option value="Советнику таможенной службы II ранга">
+                                    <option value="Советнику таможенной службы III ранга">
+                                    <option value="Инспектору таможенной службы 1 ранга">
+                                    <option value="Инспектору таможенной службы II ранга">
+                                    <option value="Инспектору таможенной службы III ранга">
+                                    <option value="Курсанту">
+                                    <option value="Другое">
+                            </datalist>
+                        </div>
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">Фамилия инциалы в Дательном падеже</label>
+                            <input type="text" class="form-control" id="full_name" name="full_name">
+                        </div>
+                        <div class="mb-3">
+                            <label for="military_unit" class="form-label">Воинская часть</label>
+                            <input type="text" class="form-control" id="military_unit" name="military_unit">
+                        </div>
+                        <div class="form-group">
+                            <label for="service_base" class="form-label">Основа службы</label>
+                            <select id="service_base" name="service_base" class="form-control mb-2" required>
+                                <option value="Военнослужащий по контракту">Военнослужащий по контракту</option>
+                                <option value="Военнослужащий, призванный по мобилизации">Военнослужащий, призванный по мобилизации</option>
+                                <option value="Офицеры, прапорщики">Офицеры, прапорщики</option>                           
+                                <option value="Военнослужащий по призыву">Военнослужащий по призыву</option>
+                                <option value="Курсант 1 курса (призывник)">Курсант 1 курса (призывник)</option>
+                                <option value="Курсант 2-4 курса">Курсант 2-4 курса</option>
+                                <option value="Прочие (ЛНР и ДНР)">Прочие (ЛНР и ДНР)</option>
+                                <option value="Пенсионеры МО">Пенсионеры МО</option>
+                                <option value="ЧСВ запаса, кадров">ЧСВ запаса, кадров</option>
+                                <option value="Прочие">Прочие</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="departure_date" class="form-label">Дата убытия</label>
+                            <input type="date" class="form-control" id="departure_date" name="departure_date">
+                        </div>
+                        <div class="mb-3">
+                            <label for="where_to" class="form-label">Полагать убывшим в</label>
+                            <input type="text" class="form-control" id="where_to" name="where_to" list="where_to_suggestions">
+                            <datalist id="where_to_suggestions"></datalist>
+                        </div>
+                        <div class="mb-3">
+                            <label for="arrival_date" class="form-label">Полагать прибывшим</label>
+                            <input type="date" class="form-control" id="arrival_date" name="arrival_date">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<!-- Modal for Editing Record -->
+<div class="modal fade" id="editVPDModal" tabindex="-1" aria-labelledby="editVPDModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editVPDModalLabel">Редактировать запись</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-vpd-form">
+                        <!-- Поля формы -->
+                        <div class="mb-3">
+                            <label for="edit_military_rank" class="form-label">Воинское звание</label>
+                            <input type="text" class="form-control" id="edit_military_rank" list="ranks_edit"  name="military_rank">
+                            <datalist id="ranks_edit">
+                                <option value="Рядовому">
+                                <option value="Матросу">
+                                <option value="Ефрейтору">
+                                <option value="Старшему матросу">
+                                <option value="Младшему сержанту">
+                                <option value="Старшине 2-й статьи">
+                                <option value="Сержанту">
+                                <option value="Старшине 1-й статьи">
+                                <option value="Старшему сержанту">
+                                <option value="Главному старшине">
+                                <option value="Старшине">
+                                <option value="Главному корабельному старшине">
+                                <option value="Прапорщику">
+                                <option value="Мичману">
+                                <option value="Старшему прапорщику">
+                                <option value="Старшему мичману">
+                                <option value="Младшему лейтенанту">
+                                <option value="Лейтенанту">
+                                <option value="Старшему лейтенанту">
+                                <option value="Капитану">
+                                <option value="Капитан-лейтенанту">
+                                <option value="Майору">
+                                <option value="Капитану III ранга">
+                                <option value="Подполковнику">
+                                <option value="Капитану II ранга">
+                                <option value="Полковнику">
+                                <option value="Капитану 1-го ранга">
+                                <option value="Генерал-майору">
+                                <option value="Контр-адмиралу">
+                                <option value="Генерал-лейтенанту">
+                                <option value="Вице-адмиралу">
+                                <option value="Генерал-полковнику">
+                                <option value="Адмиралу">
+                                <option value="Генералу армии">
+                                <option value="Адмиралу флота, маршалу рода войск">
+                                <option value="Главному маршалу рода войск">
+                                <option value="Маршалу Советского Союза">
+                                <option value="Адмиралу Флота Советского Союза">
+                                <option value="Действительному государственному советнику таможенной службы">
+                                <option value="Государственному советнику таможенной службы 1 ранга">
+                                <option value="Государственному советнику таможенной службы II ранга">
+                                <option value="Государственному советнику таможенной службы III ранга">
+                                <option value="Советнику таможенной службы 1 ранга">
+                                <option value="Советнику таможенной службы II ранга">
+                                <option value="Советнику таможенной службы III ранга">
+                                <option value="Инспектору таможенной службы 1 ранга">
+                                <option value="Инспектору таможенной службы II ранга">
+                                <option value="Инспектору таможенной службы III ранга">
+                                <option value="Курсанту">
+                                <option value="Другое">
+                            </datalist>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_full_name" class="form-label">Фамилия инциалы в Дательном падеже</label>
+                            <input type="text" class="form-control" id="edit_full_name" name="full_name">
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_military_unit" class="form-label">Воинская часть</label>
+                            <input type="text" class="form-control" id="edit_military_unit" name="military_unit">
+                       
+                          
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_service_base" class="form-label">Основа службы</label>
+                           
+                            <select id="edit_service_base" name="service_base" class="form-control mb-2" required>
+                                <option value="Военнослужащий по контракту">Военнослужащий по контракту</option>
+                                <option value="Военнослужащий, призванный по мобилизации">Военнослужащий, призванный по мобилизации</option>
+                                <option value="Офицеры, прапорщики">Офицеры, прапорщики</option>                           
+                                <option value="Военнослужащий по призыву">Военнослужащий по призыву</option>
+                                <option value="Курсант 1 курса (призывник)">Курсант 1 курса (призывник)</option>
+                                <option value="Курсант 2-4 курса">Курсант 2-4 курса</option>
+                                <option value="Прочие (ЛНР и ДНР)">Прочие (ЛНР и ДНР)</option>
+                                <option value="Пенсионеры МО">Пенсионеры МО</option>
+                                <option value="ЧСВ запаса, кадров">ЧСВ запаса, кадров</option>
+                                <option value="Прочие">Прочие</option>
+                            </select>
+  
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_departure_date" class="form-label">Дата убытия</label>
+                            <input type="date" class="form-control" id="edit_departure_date" name="departure_date">
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_where_to" class="form-label">Полагать убывшим в</label>
+                            <input type="text" class="form-control" id="edit_where_to" name="where_to">
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_arrival_date" class="form-label">Дата прибытия</label>
+                            <input type="date" class="form-control" id="edit_arrival_date" name="arrival_date">
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_current_time" class="form-label">Дата создания предписания</label>
+                            <input type="date" class="form-control" id="edit_current_time" name="current_time">
+                        </div>
+                        <input type="hidden" id="edit_id" name="id">
+                        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/jquery-3.7.1.min.js"></script>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/bootstrap-datepicker.min.js"></script>
+    
+    <script>
+        document.getElementById('resetFilters').addEventListener('click', function() {
+        window.location.reload(); // Перезагружает страницу
+    });
+
+
+         document.getElementById('exportButton').addEventListener('click', function() {
+                window.location.href = '/vpd/export';
+            });
+
+        document.getElementById('datepicker').addEventListener('change', fetchData);
+document.getElementById('search').addEventListener('input', fetchData);
+
+function fetchData() {
+    const date = document.getElementById('datepicker').value;
+    const query = document.getElementById('search').value;
+
+    if (!date && !query) {
+        return; // Если нет введённых данных, не делаем запрос
+    }
+
+    fetch(`/vpd/search?full_name=${query}&date=${date}`)
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('vpd-table-body');
+                tableBody.innerHTML = '';  // Очищаем таблицу перед добавлением новых данных
+
+                if (data.length > 0) {
+                    data.forEach((record, index) => {
+                        tableBody.innerHTML += `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${record.military_rank}</td>
+                                <td>${record.full_name}</td>
+                                <td>${new Date(record.departure_date).toLocaleDateString()}</td>
+                                <td>${record.where_to}</td>
+                                <td>${new Date(record.arrival_date).toLocaleDateString()}</td>
+                                <td>${record.military_unit}</td>
+                                <td>${record.service_base}</td>
+                                <td>${new Date(record.current_time).toLocaleDateString()}</td>
+                                <td>
+                                    <a href="/generate_prescription/${record.id}" class="btn btn-sm btn-primary">Предписание</a>
+                                    <button class="btn btn-sm btn-edit" onclick="editRecord(${record.id})">Редактировать</button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteRecord(${record.id})">Удалить</button>
+                                </td>
+                            </tr>`;
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="10">Записи не найдены</td></tr>';
+                }
+            });
+    }
+
+  
+        
+    
+        function editRecord(id, militaryRank, fullName, militaryUnit, serviceBase, departureDate, whereTo, arrivalDate, currentTime) {
+            $('#editVPDModal').modal('show');
+            $('#edit_id').val(id);
+            $('#edit_military_rank').val(militaryRank);
+            $('#edit_full_name').val(fullName);
+            $('#edit_military_unit').val(militaryUnit);
+            $('#edit_service_base').val(serviceBase);
+            $('#edit_departure_date').val(departureDate);
+            $('#edit_where_to').val(whereTo);
+            $('#edit_arrival_date').val(arrivalDate);
+            $('#edit_current_time').val(currentTime);
+        }
+    
+        async function deleteRecord(recordId) {
+            if (confirm("Вы уверены, что хотите удалить эту запись?")) {
+                try {
+                    const response = await fetch(`/vpd/delete-vpd/${recordId}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        alert("Запись успешно удалена");
+                   
+                    } else {
+                        alert("Ошибка при удалении записи");
+                    }
+                } catch (error) {
+                    console.error("Ошибка:", error);
+                    alert("Ошибка при удалении записи");
+                }
+            }
+        }
+    
+        $(document).ready(function() {
+    // Инициализация datepicker
+    $('#datepicker').datepicker({
+        format: 'yyyy-mm-dd',
+        autoclose: true,
+        todayHighlight: true,
+        inline: true  // Делает datepicker всегда видимым
+    });
+
+    // Добавляем обработчики для изменения даты и ввода текста в поиск
+    $('#datepicker').on('change', fetchData);
+    $('#search').on('input', fetchData);
+
+    // Функция для загрузки данных
+    function fetchData() {
+        const date = $('#datepicker').val(); // Получаем значение выбранной даты
+        const query = $('#search').val(); // Получаем значение поля поиска
+
+        // Проверка: если ни дата, ни строка поиска не заполнены, ничего не делаем
+        if (!date && !query) {
+            return;
+        }
+
+        // Отправляем запрос на сервер для поиска данных
+        fetch(`/vpd/search?full_name=${encodeURIComponent(query)}&date=${encodeURIComponent(date)}`)
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = $('#vpd-table-body');
+                tableBody.empty();  // Очищаем таблицу перед добавлением новых данных
+
+                if (data.length > 0) {
+                    // Если есть данные, отображаем их в таблице
+                    data.forEach((record, index) => {
+                        tableBody.append(`
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${record.military_rank}</td>
+                                <td>${record.full_name}</td>
+                                <td>${new Date(record.departure_date).toLocaleDateString()}</td>
+                                <td>${record.where_to}</td>
+                                <td>${new Date(record.arrival_date).toLocaleDateString()}</td>
+                                <td>${record.military_unit}</td>
+                                <td>${record.service_base}</td>
+                                <td>${new Date(record.current_time).toLocaleDateString()}</td>
+                                <td>
+                                    <a href="/generate_prescription/${record.id}" class="btn btn-sm btn-primary">Предписание</a>
+                                    <button class="btn btn-sm btn-edit" onclick="editRecord(${record.id})">Редактировать</button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteRecord(${record.id})">Удалить</button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                } else {
+                    // Если данных нет, выводим сообщение
+                    tableBody.append('<tr><td colspan="10">Записи не найдены</td></tr>');
+                }
+            })
+            .catch(error => {
+                console.error("Ошибка при загрузке данных:", error);
+            });
+    }
+
+    // Обработчик формы для генерации отчета по выбранной дате
+    $('#reportForm').on('submit', function(e) {
+        e.preventDefault();
+        const date = $('#datepicker').val();
+        if (!date) {
+            alert("Пожалуйста, выберите дату.");
+            return;
+        }
+        window.location.href = `/vpd/generate-report?selected_date=${encodeURIComponent(date)}`;
+    });
+
+    // Обработчик для редактирования записи
+    $('#edit-vpd-form').on('submit', function(event) {
+        event.preventDefault();
+        $.ajax({
+            url: `/vpd/edit-vpd/`,
+            method: 'POST',
+            data: $(this).serialize(),
+            success: function() {
+                $('#editVPDModal').modal('hide');
+                alert('Запись обновлена');
+                fetchData();  // Обновляем данные после редактирования
+            },
+            error: function() {
+                alert('Ошибка при обновлении записи');
+            }
+        });
+    });
+    
+            const setupAutocomplete = (inputId, datalistId) => {
+                document.getElementById(inputId).addEventListener("input", async function(event) {
+                    const query = event.target.value;
+                    if (query.length > 2) {
+                        try {
+                            const response = await fetch(`/vpd/autocomplete/?query=${encodeURIComponent(query)}`);
+                            const suggestions = await response.json();
+                            if (Array.isArray(suggestions)) {
+                                let datalist = document.getElementById(datalistId);
+                                datalist.innerHTML = "";
+                                suggestions.forEach(suggestion => {
+                                    const option = document.createElement("option");
+                                    option.value = suggestion;
+                                    datalist.appendChild(option);
+                                });
+                            } else {
+                                console.error("Ошибка данных от сервера");
+                            }
+                        } catch (error) {
+                            console.error("Ошибка автозаполнения:", error);
+                        }
+                    }
+                });
+            };
+    
+            setupAutocomplete("where_to", "where_to_suggestions");
+            setupAutocomplete("military_unit", "military_unit_suggestions");
+    
+            $('#add-vpd-form').on('submit', async function(event) {
+                event.preventDefault();
+                const formData = new FormData(this);
+                try {
+                    const response = await fetch("/vpd/add-vpd/", {
+                        method: "POST",
+                        body: formData
+                    });
+                    if (response.ok) {
+                        alert("Запись успешно добавлена");
+                     
+                    } else {
+                        const errorData = await response.json();
+                        console.error("Ошибка:", errorData);
+                    }
+                } catch (error) {
+                    console.error("Ошибка:", error);
+                }
+            });
+    
+   
+        });
+    </script>
+    
+</body>
+{% endblock %}
+</html>

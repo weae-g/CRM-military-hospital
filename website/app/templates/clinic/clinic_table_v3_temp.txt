@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пациенты</title>
+    <link rel="icon" href="/img/logo_first.png" type="image/png">
+    
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 90%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+        .logo {
+            display: block;
+            margin: 20px auto;
+            max-width: 50%;
+            height: auto;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+        th, td {
+            padding: 6px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f4f4f4;
+        }
+        .download-button {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        .download-button:hover {
+            background-color: #45a049;
+        }
+        .modal-body {
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+        #search {
+            margin-bottom: 10px;
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+
+    {% block content %}
+   
+
+    <div class="container">
+        <div class="export-btn">
+            <a href="/clinic/download_excel">Архив пациентов, для загрузки в формате Excel</a>
+        </div>
+        <h1>Список пациентов</h1>
+        <p>Общее количество пациентов: <span id="totalPatients">0</span></p>
+        <!-- Кнопка для открытия модального окна добавления пациента -->
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addPatientModal">
+            <i class="fas fa-plus"></i> Добавить пациента
+        </button>
+
+        <!-- Поле поиска по пациентам -->
+        <input type="text" id="search" placeholder="Поиск по ФИО или номеру карты" class="form-control mb-3">
+
+        <div class="input-group mb-3">
+            <input type="text" id="search" placeholder="Поиск по ФИО или номеру карты" class="form-control">
+            <div class="input-group-append">
+                <button class="btn btn-outline-secondary" type="button" id="searchButton">Поиск</button>
+            </div>
+        </div>
+            
+        
+
+        <table id="clinicTable" class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Первое обращение</th>
+                    <th>Номер карты</th>
+                    <th>ФИО</th>
+                    <th>Дата рождения</th>
+                    <th>Кем направлен</th>
+                    <th>Воинская часть</th>
+                    <th>Воинское звание</th>
+                    <th>Принадлежность</th>
+                    <th>Адрес</th>
+                   
+                    <th>Участие в боевых действиях</th>
+
+                    <th>Военный округ</th>
+                    <th>Телефон</th>
+                    <th>Информация о пациенте</th>
+
+                    <th>Информация</th>
+
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be added here dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="/js/jquery-3.5.1.min.js"></script>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/bootstrapv1.min.js"></script>
+    <script src="/js/fontawesome.min.js"></script>
+    <script>
+       document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('search');
+    const searchButton = document.getElementById('searchButton');
+
+    // Функция для выполнения поиска
+    function performSearch() {
+        const query = searchInput.value.trim();
+        if (query.length >= 3) {
+            fetch(`/clinic/clinic_data?name=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateTable(data);
+                })
+                .catch(error => console.error('Error fetching patients:', error));
+        } else {
+            fetch('/clinic/clinic_data')
+                .then(response => response.json())
+                .then(data => {
+                    updateTable(data);
+                });
+        }
+    }
+
+    // Обработчик нажатия кнопки поиска
+    searchButton.addEventListener('click', performSearch);
+
+    // Обработчик нажатия клавиши Enter
+    searchInput.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            performSearch();
+        }
+    });
+
+    function formatDateTime(dateTimeString) {
+        if (!dateTimeString) return '';
+        
+        const date = new Date(dateTimeString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        
+        return `${day}.${month}.${year} в ${hours}:${minutes}`;
+    }
+
+
+    fetch('/clinic/clinic_data')
+        .then(response => response.json())
+        .then(data => {
+            updateTable(data);
+        });
+
+    function updateTable(patients) {
+        const tableBody = document.querySelector('#clinicTable tbody');
+        tableBody.innerHTML = '';
+
+        patients.forEach(patient => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${patient.id != null ? patient.id : ''}</td>
+                <td>${patient.current_time != null ? formatDateTime(patient.current_time) : ''}</td>
+                <td>${patient.card_number != null ? patient.card_number : ''}</td>
+                <td>${patient.full_name != null ? patient.full_name : ''}</td>
+                <td>${patient.birthday != null ? patient.birthday : ''}</td>
+                <td>${patient.directed != null ? patient.directed : ''}</td>
+                <td>${patient.military_unit != null ? patient.military_unit : ''}</td>
+                <td>${patient.military_rank != null ? patient.military_rank : ''}</td>
+                <td>${patient.belonging != null ? patient.belonging : ''}</td>
+                <td>${patient.address != null ? patient.address : ''}</td>
+                <td>${patient.hostilities != null ? (patient.hostilities ? 'Да' : 'Нет') : ''}</td>
+                <td>${patient.military_district != null ? patient.military_district : ''}</td>
+                <td>${patient.phone_number != null ? patient.phone_number : ''}</td>
+                <td>${patient.patient_info != null ? patient.patient_info : ''}</td>
+                <td><button class="btn btn-primary info-btn" data-id="${patient.id}">Информация</button></td>
+                <td><button class="btn btn-danger delete-btn" data-id="${patient.id}">Удалить</button></td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        // Add event listener to info buttons
+        document.querySelectorAll('.info-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const patientId = this.getAttribute('data-id');
+                window.location.href = `/clinic/patient/${patientId}`;
+            });
+        });
+
+        document.getElementById('clinicDataForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            data.hostilities = document.getElementById('editHostilities').value === 'true';
+            fetch('/clinic/clinic_data/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.detail) {
+                    alert("Ошибка: " + data.detail);
+                } else {
+                    fetch('/clinic/clinic_data')
+                        .then(response => response.json())
+                        .then(data => {
+                            updateTable(data);
+                            $('#addPatientModal').modal('hide'); // Закрытие модального окна после успешного добавления пациента
+                    });
+                    $('#addPatientModal').modal('hide');
+                }
+            })
+            .catch(error => alert("Ошибка: " + error.message));
+        });
+
+        document.getElementById('totalPatients').textContent = `${patients.length} пациентов`;
+    }
+});
+
+    </script>
+    {% endblock %}
+</body>
+</html>

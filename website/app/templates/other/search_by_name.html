@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/img/logo_first.png" type="image/png">
+    <title>Сведения по пациентам</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .highlight {
+            background-color: orange; /* Цвет для выделения строк */
+        }
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+    
+    {% block content %}
+    
+    <h2>Сведения по пациентам</h2>
+
+    <label for="searchName">Поиск по ФИО:</label>
+    <input type="text" id="searchName" onkeyup="searchByName()">
+
+    <table id="patientTable">
+        <thead>
+            <tr>
+                {% if data|length > 0 %}
+                    {% for column in data[0].keys() %}
+                        {% if column not in ['нарушение', 'highlight', 'source', 'Койко-дни'] %} <!-- Исключаем ненужные столбцы -->
+                            <th>{{ column }}</th>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for patient in data %}
+                {% if not patient.get('нарушение') %} <!-- Исключаем строки с 'нарушение' -->
+                    <tr class="{{ 'highlight' if patient.get('Койко-дни', 0) > 21 else '' }}">
+                        {% for key, value in patient.items() %}
+                            {% if key not in ['нарушение', 'highlight', 'source', 'Койко-дни'] %} <!-- Исключаем ненужные столбцы -->
+                                <td>{{ value if value not in [None, 'nan', 'NaT'] else '' }}</td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        function searchByName() {
+            const input = document.getElementById('searchName').value.toLowerCase();
+            const table = document.getElementById('patientTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const nameCell = rows[i].getElementsByTagName('td')[4]; // Предполагается, что ФИО в третьем столбце
+                if (nameCell) {
+                    const name = nameCell.textContent.toLowerCase();
+                    rows[i].style.display = name.includes(input) ? '' : 'none';
+                }
+            }
+        }
+    </script>
+    {% endblock %}
+    
+</body>
+</html>

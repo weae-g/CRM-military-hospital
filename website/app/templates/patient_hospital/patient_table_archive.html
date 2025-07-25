@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="/css/jquery-ui.css">
+    <link rel="icon" href="/img/logoV3.png" type="image/png">
+    <script src="/js/jquery-3.7.1.min.js"></script>
+    <script src="/js/jquery-ui.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: calc(100% - 40px);
+            margin: 20px;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            table-layout: fixed;
+        }
+        th, td {
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            white-space: normal;
+            padding: 5px 10px;
+            font-size: 13px;
+            word-wrap: break-word;
+        }
+        th {
+            position: sticky;
+            top: 0;
+            background-color: #f2f2f2;
+            z-index: 1;
+        }
+
+        /* Кнопка для возврата наверх страницы */
+        #scrollToTopBtn {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            z-index: 99;
+            border: none;
+            outline: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            padding: 15px;
+            border-radius: 50%;
+            font-size: 18px;
+        }
+
+        #scrollToTopBtn:hover {
+            background-color: #0056b3;
+        }
+
+        tr:hover {
+            background-color: #f4f4f4;
+        }
+        .export-btn {
+            display: block;
+            width: auto;
+            padding: 10px 20px;
+            margin: 20px auto;
+            text-align: center;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        .export-btn:hover, .export-btn:focus {
+            background-color: #0056b3;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+            color: white;
+        }
+        .export-btn-low {
+            display: block;
+            width: auto;
+            padding: 10px 20px;
+            margin: 20px auto;
+            text-align: center;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        .export-btn-low:hover, .export-btn-low:focus {
+            background-color: #0056b3;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+            color: white;
+        }
+        .total-patients {
+            text-align: left;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .datepicker-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .datepicker-container input {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .info-button {
+            height: auto;
+            width: 20px;
+            border-radius: 50%;
+            padding: 5px;
+        }
+        .hidden-column {
+            display: none;
+        }
+        .ellipsis {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .expanded {
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        .expandable {
+            cursor: pointer;
+        }
+        .month-calendar-column {
+            text-align: center;
+            margin: 20px 0;
+        }
+        #monthpicker {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .search-instruction {
+            text-align: center;
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+    
+    {% block content %}
+    <button id="scrollToTopBtn" title="Наверх">&#10148;</button>
+
+    <div class="total-patients">
+        <p>Общее количество пациентов: {{ total_patients }}</p>
+    </div>
+    
+    <h1>{{ title }}</h1>
+    <div class="export-btn">
+        <a href="/pacients/export_data_to_excel">Архив пациентов, для загрузки в формате Excel</a>
+    </div>
+
+    <div class="search-instruction">
+        <p>Введите первые два символа для поиска по ФИО</p>
+    </div>
+
+    <input type="text" id="searchInput" placeholder="Поиск по ФИО" style="padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; width: calc(100% - 20px); margin-bottom: 10px;">
+
+    <table id="patientsTable" style="display: none;">
+        <thead>
+            <tr>
+                <th>№ п/п</th>
+                <th>История</th>
+                <th>ФИО</th>
+                <th>Дата рожд.</th>
+                <th>Звание</th>
+                <th>В/часть</th>
+                <th>Основа сл.</th>
+                <th>Округ</th>
+                <th>Направление</th>
+                <th>Отделение</th>               
+                <th>Госп. дата</th>               
+                <th>На категорию годности</th>
+                <th>Направительный диагноз</th>
+                <th>Диагноз при поступлении</th>
+                <th>Окончательный диагноз</th>
+                <th>Лечащий врач</th>
+                <th>Дата выписки</th>
+ 
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Данные будут динамически добавлены здесь -->
+        </tbody>
+    </table>
+
+
+    <script>
+       $(document).ready(function() {
+
+
+    // Обработчик события для поля ввода
+    $('#searchInput').on('input', function() {
+        const query = $(this).val();
+        if (query.length >= 2) {
+            searchPatients(query); // Выполняем поиск, если два символа и больше
+        } else {
+            // Если символов меньше двух, очищаем таблицу или делаем что-то другое
+            $('#patientsTable tbody').empty();
+            $('#patientsTable').hide(); // Скрываем таблицу, если поиск не актуален
+        }
+    });
+
+    function searchPatients(query) {
+        $.ajax({
+            url: `/pacients/hospitalized_patients/search?query=${query}`, // URL для поиска
+            method: 'GET',
+            success: function(data) {
+                populateTable(data); // Заполняем таблицу данными
+            },
+            error: function() {
+                console.error("Ошибка загрузки данных для поиска");
+            }
+        });
+    }
+
+    
+
+    function populateTable(data) {
+        let tbody = $('#patientsTable tbody');
+        tbody.empty();
+
+        const maxLength = 150; // Максимальная длина текста
+
+        data.forEach((item, index) => {
+
+            let firstDiagnosis = item.first_diagnosis || '';
+            let diagnosisUponAdmission = item.diagnosis_upon_admission || '';
+            let finalDiagnosis = item.final_diagnosis || '';
+
+            // Функция для укорочения текста
+            function shortenText(text) {
+                if (text.length > maxLength) {
+                    return {
+                        shortText: text.substring(0, maxLength) + '...',
+                        fullText: text
+                    };
+                }
+                return { shortText: text, fullText: text };
+            }
+
+            // Укорачивание текста для диагнозов
+            const firstDiagnosisShortened = shortenText(firstDiagnosis);
+            const diagnosisUponAdmissionShortened = shortenText(diagnosisUponAdmission);
+            const finalDiagnosisShortened = shortenText(finalDiagnosis);
+
+            let row = `<tr>
+                <td>${index + 1}</td>
+                <td>${item.history_number}</td>
+                <td data-text="${item.full_name}">${item.full_name}</td>
+                <td>${item.birthday_date}</td>
+                <td>${item.military_rank}</td>
+                <td>${item.military_unit || ''}</td>
+                <td>${item.service_basis}</td>
+                <td>${item.district || ''}</td>
+                <td>${item.directions || ''}</td>
+                <td>${item.branch}</td>
+                <td>${item.current_time}</td>
+                <td>${item.suitability_category || ''}</td>
+                <td data-short-text="${firstDiagnosisShortened.shortText}" data-full-text="${firstDiagnosisShortened.fullText}" class="diagnosis">${firstDiagnosisShortened.shortText}</td>
+                <td data-short-text="${diagnosisUponAdmissionShortened.shortText}" data-full-text="${diagnosisUponAdmissionShortened.fullText}" class="diagnosis">${diagnosisUponAdmissionShortened.shortText}</td>
+                <td data-short-text="${finalDiagnosisShortened.shortText}" data-full-text="${finalDiagnosisShortened.fullText}" class="diagnosis">${finalDiagnosisShortened.shortText}</td>
+                <td>${item.therapist || ''}</td>
+                <td>${item.discharge_date || ''}</td>
+                <td>
+                    <a href="/pacients/passport_data/${item.id}">
+                        <img src="/img/icons8-info-40.png" class="info-button" title="Подробности">
+                    </a>
+                </td>
+            </tr>`;
+            tbody.append(row);
+        });
+
+        $('#patientsTable').show();
+
+        // Код для обработки кликов на диагнозах
+        document.querySelectorAll('td.diagnosis').forEach(td => {
+            td.addEventListener('click', function() {
+                if (this.classList.contains('expanded')) {
+                    this.classList.remove('expanded');
+                    this.innerText = this.dataset.shortText; // Используем data-short-text
+                } else {
+                    this.classList.add('expanded');
+                    this.innerText = this.dataset.fullText; // Используем data-full-text
+                }
+            });
+        });
+    }
+});
+    </script>
+    
+    {% endblock %}
+</body>
+</html>

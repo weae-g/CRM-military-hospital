@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Список пользователей</title>
+    <link rel="icon" href="/img/logo_first.png" type="image/png">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        a {
+            text-decoration: none;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .delete-button {
+            color: #e74c3c;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .delete-button:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+
+    {% block content %}
+    <h1>Список пользователей</h1>
+
+    <!-- Форма для добавления нового пользователя -->
+    <form action="/users/add_user" method="post">
+        <h2>Добавить нового пользователя</h2>
+        <label for="username">Имя пользователя:</label>
+        <input type="text" id="username" name="username" required>
+        
+        <label for="password">Пароль:</label>
+        <input type="text" id="password" name="password" required>
+        
+        <label for="ip_addresses">IP адреса:</label>
+        <input type="text" id="ip_addresses" name="ip_addresses">
+        
+        <label for="full_name">Полное имя:</label>
+        <input type="text" id="full_name" name="full_name" required>
+        
+        <label for="cabinet">Кабинет:</label>
+        <input type="text" id="cabinet" name="cabinet">
+        
+        <label for="role">Роль:</label>
+        <input type="text" id="role" name="role" required>
+        
+        <input type="submit" value="Добавить">
+    </form>
+
+    <!-- Таблица для отображения пользователей -->
+    <h2>Список пользователей</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Имя пользователя</th>
+                <th>Полное имя пользователя</th>
+                <th>IP адрес</th>
+                <th>Кабинет</th>
+                <th>Роль в системе</th>
+                <th>Дествие</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.full_name }}</td>
+                <td>{{ user.ip_addresses }}</td>
+                <td>{{ user.cabinet }}</td>
+                <td>{{ user.role }}</td>
+                <td>
+                    <a href="/users/delete_user?id={{ user.id }}" class="delete-button" onclick="return confirm('Вы уверены, что хотите удалить этого пользователя?');">Удалить</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endblock %}
+</body>
+</html>

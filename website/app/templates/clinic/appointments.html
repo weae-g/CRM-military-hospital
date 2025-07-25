@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Summary and Appointments</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script defer src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script defer src="script.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Patient Summary</h1>
+        <div id="patient-summary" class="mb-5">
+            <!-- Сводка по пациенту будет отображена здесь -->
+        </div>
+
+        <h2 class="mb-4">Appointments</h2>
+        <h3 class="mb-4">Today's Appointments</h3>
+        <table class="table table-bordered" id="todays-appointments">
+            <thead>
+                <tr>
+                    <th>Дата и время</th>
+                    <th>Доктор</th>
+                    <th>Заметка</th>
+                    <th>Отчет доктора</th>
+                    <th>Заметка доктора</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Записи на сегодня будут отображены здесь -->
+            </tbody>
+        </table>
+
+        <h3 class="mb-4">All Appointments</h3>
+        <table class="table table-bordered" id="all-appointments">
+            <thead>
+                <tr>
+                    <th>Дата и время</th>
+                    <th>Доктор</th>
+                    <th>Заметка</th>
+                    <th>Отчет доктора</th>
+                    <th>Заметка доктора</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Все записи будут отображены здесь -->
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        const patientId = 1; // Замените на динамическое значение ID пациента
+
+        // Получение сводки по пациенту
+        const patientSummaryResponse = await fetch(`/clinic/patient_summary/${patientId}`);
+        const patientSummary = await patientSummaryResponse.json();
+
+        const patientSummaryContainer = document.getElementById('patient-summary');
+        patientSummaryContainer.innerHTML = `
+            <p><strong>Full Name:</strong> ${patientSummary.full_name}</p>
+            <p><strong>Birthday:</strong> ${new Date(patientSummary.birthday).toLocaleDateString()}</p>
+            <p><strong>Address:</strong> ${patientSummary.address}</p>
+            <p><strong>Policy CMI:</strong> ${patientSummary.policy_CMI}</p>
+            <p><strong>SNILS:</strong> ${patientSummary.snils}</p>
+            <p><strong>Military Unit:</strong> ${patientSummary.military_unit}</p>
+            <p><strong>Military Rank:</strong> ${patientSummary.military_rank}</p>
+            <p><strong>Personal Number:</strong> ${patientSummary.personal_number}</p>
+            <p><strong>Phone Number:</strong> ${patientSummary.phone_number}</p>
+            <p><strong>Card Number:</strong> ${patientSummary.card_number}</p>
+        `;
+
+        // Получение записей к врачу
+        const appointmentsResponse = await fetch(`/clinic/appointments/${patientId}`);
+        const appointments = await appointmentsResponse.json();
+
+        const todaysAppointmentsContainer = document.querySelector('#todays-appointments tbody');
+        const allAppointmentsContainer = document.querySelector('#all-appointments tbody');
+        const now = new Date();
+
+        appointments.forEach(appointment => {
+            const appointmentDate = new Date(appointment.datetime_q);
+            const appointmentRow = `
+                <tr>
+                    <td>${appointment.datetime_q}</td>
+                    <td>${appointment.doctor_full_name}</td>
+                    <td>${appointment.note ? appointment.note : 'Нет данных'}</td>
+                    <td>${appointment.doctor_report ? appointment.doctor_report : 'Нет данных'}</td>
+                    <td>${appointment.doctor_note ? appointment.doctor_note : 'Нет данных'}</td>
+                </tr>
+            `;
+
+            if (appointmentDate.toDateString() === now.toDateString()) {
+                todaysAppointmentsContainer.innerHTML += appointmentRow;
+            }
+            allAppointmentsContainer.innerHTML += appointmentRow;
+        });
+    });
+</script>

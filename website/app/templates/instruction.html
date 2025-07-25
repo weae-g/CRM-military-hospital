@@ -1,0 +1,66 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Инструкции к сайту</title>
+        <style>        
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #f4f4f4;
+            }
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #fff;
+                border-radius: 10px;
+                box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            }
+            h1, h2, h3 {
+                text-align: center;
+                margin-top: 30px;
+                margin-bottom: 20px;
+            }
+            p {
+                margin-bottom: 10px;
+                font-size: 16px; /* Уменьшил размер шрифта */
+            }
+    
+        </style>
+    </head>
+    <body>
+        {% extends "base.html" %}
+
+        {% block styles %}
+            <link rel="stylesheet" href="/css/hat.css">
+        {% endblock %}
+        
+        {% block content %}
+        <div class="container">
+            <!--<p><strong>Приветсвуем вас на странице использвания сисетмы, здесь будет информация по возможнстям использования  </strong></p>-->
+            <h1 style="text-align: justify;">По возникающим вопросам, или предложениям по улучшению обращайтесь по стационарному телефону <strong>554</strong></h1>
+            <h1>Инструкции к сайту</h1>
+            <p><strong>Возможности браузера</strong></p>
+            <ul style=" margin-bottom: 20px; padding-left: 20px;">
+                <li style="margin-bottom: 5px;font-size: 14px;">Для поиска по сайту используйте сочетание клавиш <strong>Ctrl + F</strong>.</li>         
+                <li style="margin-bottom: 5px;font-size: 14px;">Для обновления страницы используйте комбинацию клавиш <strong>Ctrl + R</strong> или <strong>F5</strong>.</li>
+                <li style="margin-bottom: 5px;font-size: 14px;">Чтобы закрыть текущую вкладку, нажмите <strong>Ctrl + W</strong>.</li>
+            </ul>
+            
+            <p><strong>Cайт предоставляет следующие возможности:</strong></p>
+            <ul style=" margin-bottom: 20px; padding-left: 20px;">
+                <li style="margin-bottom: 5px;font-size: 14px;">Просмотр статистики по отделениям.</li><br>
+                <li style="margin-bottom: 5px;font-size: 14px;">Поиск пациентов по различным параметрам.</li><br>
+                <li style="margin-bottom: 5px;font-size: 14px;">Экспорт данных в формат Excel.</li><br>
+                <li style="margin-bottom: 5px;font-size: 14px;">Отображение информации о пациентах с пневмонией.</li><br>
+                <li style="margin-bottom: 5px;font-size: 14px;">Статистика по воинским званиям пациентов.</li><br>
+            </ul>
+            
+            <p></p>
+        </div>
+        {% endblock %}
+    </body>
+    </html>

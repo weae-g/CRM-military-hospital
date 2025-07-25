@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Информация о пациенте</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { margin-top: 20px; }
+        .patient-info, .appointment-form { margin-bottom: 20px; }
+        .patient-info label { font-weight: bold; }      
+        .patient-info p { margin-bottom: 5px; }
+        .patient-info .empty-info { color: #999; }
+        .no-data { text-decoration: underline; }
+        .container {
+            margin-top: 50px;
+        }
+        .table-container {
+            margin-top: 30px;
+        }
+        .table th, .table td {
+            vertical-align: middle;
+            text-align: center;
+        }
+        .table thead th {
+            background-color: #343a40;
+            color: #fff;
+        }
+        .table tbody tr:nth-child(odd) {
+            background-color: #f2f2f2;
+        }
+        .modal .form-control {
+            margin-bottom: 15px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+    
+    {% block content %}
+    <div class="container">
+        <h1>Информация о пациенте</h1>
+        <div id="patient-details" class="patient-info"></div>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#editPatientModal">
+            Редактировать данные пациента
+        </button>
+        <button type="button" class="btn btn-danger" id="deletePatientButton">
+            Удалить пациента
+        </button>
+
+       <h2>Запись на прием</h2>
+        <form id="appointmentForm">
+            <input type="hidden" id="patient_id" name="patient_id" value="{{ patient_id }}"> 
+            <div class="form-group">
+                <label for="doctor">Выберите врача:</label>
+                <select id="doctor" name="doctor_id" class="form-control" required></select>
+            </div>
+            <div class="form-group">
+                <label for="datetime_q">Дата и время:</label>
+                <input type="datetime-local" id="datetime_q" name="datetime_q" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="note">Заметка:</label>
+                <textarea id="note" name="note" class="form-control"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Записать</button>
+        </form>
+
+        <h2>Активные записи</h2>
+        <div id="active-appointments-container"></div>
+
+        <h2>Неактивные записи</h2>
+        <div id="inactive-appointments-container"></div>
+    </div>
+
+    <!-- Модальное окно для редактирования данных пациента -->
+    <div class="modal fade" id="editPatientModal" tabindex="-1" role="dialog" aria-labelledby="editPatientModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editPatientModalLabel">Редактирование данных пациента</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="editPatientForm">
+                        <div class="form-group">
+                            <label for="editFullName">ФИО:</label>
+                            <input type="text" id="editFullName" name="full_name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editDirected">Кем Направлен:</label>
+                            <input type="text"  id="editDirected" name="directed" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="editBirthday">Дата рождения:</label>
+                            <input type="date" id="editBirthday" name="birthday" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editAddress">Адрес:</label>
+                            <input type="text" id="editAddress" name="address" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="editPolicyCMI">Полис ОМС:</label>
+                            <input type="text" id="editPolicyCMI" name="policy_CMI" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="editSnils">СНИЛС:</label>
+                            <input type="text" id="editSnils" name="snils" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="editDocument">Документ:</label>
+                            <input type="text" id="editDocument" name="document" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="editMilitaryUnit">Воинская часть:</label>
+                            <input type="text" id="editMilitaryUnit" name="military_unit" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="editMilitaryRank">Воинское звание:</label>
+                            <input type="text" id="editMilitaryRank" name="military_rank" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="editBelonging">Принадлежность:</label>
+                            <input type="text" id="editBelonging" list="base" name="belonging" class="form-control">
+                            <datalist id="base">
+                                <option value="Пенсионер"></option>
+                                <option value="Инвалидность"></option>
+                                <option value="Ветеран"></option>
+                                <option value="Член семьи военнослужащего МО РФ"></option>
+                                <option value="Военнослужащий по контракту"></option>
+                                <option value="Z-штурм"></option>
+                                <option value="Курсант"></option>
+                                <option value="Мобилизованный"></option>
+                                <option value="ВСО"></option>
+                                <option value="Гражданский персонал МО РФ"></option>
+                            </datalist>
+                        </div>
+                        <div class="form-group">
+                            <label for="editHostilities">Участие в боевых действиях:</label>
+                            <select id="editHostilities" name="hostilities" class="form-control">
+                                <option value="true">Да</option>
+                                <option value="false">Нет</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editPersonalNumber">Личный номер:</label>
+                            <input type="text" id="editPersonalNumber" name="personal_number" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="editMilitaryCommissariat">Военный комиссариат:</label>
+                            <input type="text" id="editMilitaryCommissariat" name="military_commissariat" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="editMilitaryDistrict">Военный округ:</label>
+                            <input type="text" id="editMilitaryDistrict" name="military_district" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="editPhoneNumber">Номер телефона:</label>
+                            <input type="text" id="editPhoneNumber" name="phone_number" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="editCardNumber">Номер карты:</label>
+                            <input type="text" id="editCardNumber" name="card_number" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="editPatientInfo">Информация о пациенте:</label>
+                            <textarea id="editPatientInfo" name="patient_info" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="editMedicalType">Тип медосмотра:</label>
+                            <input type="text" id="editMedicalType" name="medical_type" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="editVvkInfo">Инофрмация о ВВК:</label>
+                            <input type="text" id="editVvkInfo" name="vvk_info" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="editHospitalizationInfo">Инофрмация о госпитализации:</label>
+                            <input type="text" id="editHospitalizationInfo" name="hospitalization_info" class="form-control">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/jquery-3.5.1.slim.min.js"></script>
+    <script src="/js/popper.min.js"></script>
+    <script src="/js/bootstrap4.51.min.js"></script>
+    <script src="/js/axios.min.js"></script>
+    <script>
+        
+
+
+
+        async function fetchPatientData() {
+            const patientId = "{{ patient_id }}";  // Получение ID пациента из контекста
+            try {
+                const response = await fetch(`/clinic/clinic_data/${patientId}`);
+                const patient = await response.json();
+
+                const currentTime = new Date(patient.current_time);
+                const formattedTime = `${currentTime.getDate().toString().padStart(2, '0')}.${(currentTime.getMonth() + 1).toString().padStart(2, '0')}.${currentTime.getFullYear()} в ${currentTime.getHours().toString().padStart(2, '0')}:${currentTime.getMinutes().toString().padStart(2, '0')}`;
+                if (response.ok) {
+                    // Заполнение HTML данными пациента
+                    const patientDetails = document.getElementById('patient-details');
+                    patientDetails.innerHTML = `
+                        <div class="patient-info">
+                            <p><strong>Номер карты:</strong> ${patient.card_number}</p>
+                            <p><strong>ФИО:</strong> ${patient.full_name}</p>
+                            <p><strong>Кем направлен:</strong> ${patient.directed }</p>
+                            <p><strong>Дата рождения:</strong> ${patient.birthday}</p>
+                            <p><strong>Адрес:</strong> ${patient.address}</p>
+                            <p><strong>Полис ОМС:</strong> ${patient.policy_CMI}</p>
+                            <p><strong>СНИЛС:</strong> ${patient.snils}</p>
+                            <p><strong>Личный документ (ВБ, паспорт):</strong> ${patient.document}</p>
+                            <p><strong>Воинская часть:</strong> ${patient.military_unit}</p>
+                            <p><strong>Воинское звание:</strong> ${patient.military_rank}</p>
+                            <p><strong>Принадлежность:</strong> ${patient.belonging}</p>
+                            <p><strong>Участие в боевых действиях:</strong> ${patient.hostilities ? 'Да' : 'Нет'}</p>
+                            <p><strong>Личный номер:</strong> ${patient.personal_number}</p>
+                            <p><strong>Военный комиссариат:</strong> ${patient.military_commissariat}</p>
+                            <p><strong>Военный округ:</strong> ${patient.military_district}</p>
+                            <p><strong>Номер телефона:</strong> ${patient.phone_number}</p>
+                            <p><strong>Информация о пациенте:</strong> ${patient.patient_info}</p>
+                            <p><strong>Тип медецинской помощи:</strong> ${patient.medical_type}</p>
+                            <p><strong>Информация о госпитализации:</strong> ${patient.hospitalization_info}</p>
+                            <p><strong>Инофрмация о ВВК:</strong> ${patient.vkk_info}</p>
+                            <p><strong>Дата первого обращения в поликлинику:</strong> ${formattedTime}</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(patient.detail);
+                }
+            } catch (error) {
+                alert("Ошибка загрузки данных пациента: " + error.message);
+            }
+        }
+
+        async function loadDoctors() {
+            try {
+                const response = await fetch('/clinic/doctors/');
+                const doctors = await response.json();
+
+                if (response.ok) {
+                    const doctorSelect = document.getElementById('doctor');
+                    doctors.forEach(doctor => {
+                        const option = document.createElement('option');
+                        option.value = doctor.id;
+                        option.textContent = doctor.doctor_type +" " +  doctor.full_name;
+                        doctorSelect.appendChild(option);
+                    });
+                } else {
+                    throw new Error(doctors.detail);
+                }
+            } catch (error) {
+                alert("Ошибка загрузки списка врачей: " + error.message);
+            }
+        }
+
+        async function displayAppointments(appointments) {
+            const activeAppointmentsContainer = document.getElementById('active-appointments-container');
+            const inactiveAppointmentsContainer = document.getElementById('inactive-appointments-container');
+            activeAppointmentsContainer.innerHTML = '';
+            inactiveAppointmentsContainer.innerHTML = '';
+
+            const now = new Date();
+
+            appointments.forEach(appointment => {
+                const appointmentDate = new Date(appointment.datetime_q);
+                const appointmentHtml = `
+                    <div class="appointment">
+                        <!-- Форма для каждой записи -->
+                        <form class="appointment-form">
+                            <input type="hidden" name="appointment_id" value="${appointment.id}">
+                            <p><strong>Дата и время:</strong> ${appointment.datetime_q}</p>
+                            <p><strong>Доктор:</strong> ${appointment.doctor_full_name}</p>
+                            <p><strong>Заметка:</strong> ${appointment.note}</p>
+                            <p><strong>Отчет доктора:</strong> ${appointment.doctor_report}</p>
+                            <p><strong>Заметка доктора:</strong> ${appointment.doctor_note}</p>
+                            <button type="submit" class="btn btn-primary">Обновить</button>
+                        </form>
+                    </div>
+                `;
+                if (appointmentDate >= now) {
+                    activeAppointmentsContainer.innerHTML += appointmentHtml;
+                } else {
+                    inactiveAppointmentsContainer.innerHTML += appointmentHtml;
+                }
+            });
+        }
+
+        async function displayAppointments(appointments) {
+            const activeAppointmentsContainer = document.getElementById('active-appointments-container');
+            const inactiveAppointmentsContainer = document.getElementById('inactive-appointments-container');
+            activeAppointmentsContainer.innerHTML = '';
+            inactiveAppointmentsContainer.innerHTML = '';
+
+            const now = new Date();
+
+            appointments.forEach(appointment => {
+                const appointmentDate = new Date(appointment.datetime_q);
+                const appointmentHtml = `
+                    <div class="appointment">
+                        <!-- Форма для каждой записи -->
+                        <form class="appointment-form">
+                            <input type="hidden" name="appointment_id" value="${appointment.id}">
+                            <p><strong>Дата и время:</strong> ${appointment.datetime_q}</p>
+                            <p><strong>Доктор:</strong> ${appointment.doctor_full_name}</p>
+                            <p><strong>Заметка:</strong> ${appointment.note}</p>
+                            <p><strong>Отчет доктора:</strong> ${appointment.doctor_report}</p>
+                            <p><strong>Заметка доктора:</strong> ${appointment.doctor_note}</p>
+                            <button type="submit" class="btn btn-primary">Обновить</button>
+                        </form>
+                    </div>
+                `;
+                if (appointmentDate >= now) {
+                    activeAppointmentsContainer.innerHTML += appointmentHtml;
+                } else {
+                    inactiveAppointmentsContainer.innerHTML += appointmentHtml;
+                }
+            });
+        }
+
+        async function fetchAppointmentsWithFilter(filterData) {
+            const patientId = "{{ patient_id }}";
+            try {
+                const response = await fetch(`/clinic/appointments/${patientId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(filterData)
+                });
+                const appointments = await response.json();
+
+                if (response.ok) {
+                    displayAppointments(appointments);
+                } else {
+                    throw new Error(appointments.detail);
+                }
+            } catch (error) {
+                alert("Ошибка загрузки записей: " + error.message);
+            }
+        }
+
+        async function fetchAppointments() {
+            const patientId = "{{ patient_id }}";
+            try {
+                const response = await fetch(`/clinic/appointments/${patientId}`);
+                const appointments = await response.json();
+
+                if (response.ok) {
+                    const activeAppointmentsContainer = document.getElementById('active-appointments-container');
+                    const inactiveAppointmentsContainer = document.getElementById('inactive-appointments-container');
+                    activeAppointmentsContainer.innerHTML = '';
+                    inactiveAppointmentsContainer.innerHTML = '';
+
+                    const now = new Date();
+
+                    // Проверяем, является ли appointments массивом
+                    if (Array.isArray(appointments)) {
+                        appointments.forEach(appointment => {
+                            const appointmentDate = new Date(appointment.datetime_q);
+                            const appointmentCard = document.createElement('div');
+                            appointmentCard.classList.add('card', 'mb-3');
+
+                            const cardBody = document.createElement('div');
+                            cardBody.classList.add('card-body');
+
+                            const cardTitle = document.createElement('h5');
+                            cardTitle.classList.add('card-title');
+                            cardTitle.textContent = `Дата и время: ${appointment.datetime_q}`;
+
+                            const doctorName = document.createElement('p');
+                            doctorName.classList.add('card-text');
+                            doctorName.textContent = `Доктор: ${appointment.doctor_full_name}`;
+
+                            const note = document.createElement('p');
+                            note.classList.add('card-text');
+                            note.innerHTML = appointment.note ? `Заметка: ${appointment.note}` : 'Заметка: <span class="no-data">Нет данных</span>';
+
+
+                            const doctorReport = document.createElement('p');
+                            doctorReport.classList.add('card-text');
+                            doctorReport.innerHTML = appointment.doctor_report ? `Отчет доктора: ${appointment.doctor_report}` : 'Отчет доктора: <span class="no-data">Нет данных</span>';
+
+
+                            const doctorNote = document.createElement('p');
+                            doctorNote.classList.add('card-text');
+                            doctorNote.innerHTML = appointment.doctor_note ? `Заметка доктора: ${appointment.doctor_note}` : 'Заметка доктора: <span class="no-data">Нет данных</span>';
+
+
+                            cardBody.appendChild(cardTitle);
+                            cardBody.appendChild(doctorName);
+                            cardBody.appendChild(note);
+                            cardBody.appendChild(doctorReport);
+                            cardBody.appendChild(doctorNote);
+                            appointmentCard.appendChild(cardBody);
+
+                            if (appointmentDate >= now) {
+                                activeAppointmentsContainer.appendChild(appointmentCard);
+                            } else {
+                                inactiveAppointmentsContainer.appendChild(appointmentCard);
+                            }
+                        });
+                    } else {
+                        console.error("Ошибка: appointments не является массивом");
+                    }
+                } else {
+                    throw new Error(appointments.detail);
+                }
+            } catch (error) {
+                alert("Ошибка загрузки записей: " + error.message);
+            }
+        }
+
+        async function deletePatient() {
+            const patientId = "{{ patient_id }}";
+            if (confirm("Вы уверены, что хотите удалить этого пациента?")) {
+                try {
+                    const response = await fetch(`/clinic/delete_patient/${patientId}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        alert('Пациент успешно удален');
+                        window.location.href = '/clinic/patient/'; // Перенаправить на страницу списка пациентов
+                    } else {
+                        const error = await response.json();
+                        alert(`Ошибка удаления пациента: ${error.message}`);
+                    }
+                } catch (error) {
+                    alert(`Ошибка удаления пациента: ${error.message}`);
+                }
+            }
+        }
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchPatientData();
+            loadDoctors();
+            fetchAppointments();
+            fillEditPatientModal()
+            
+            document.getElementById('appointmentForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(e.target);
+                formData.append('patient_id', "{{ patient_id }}"); // Добавление patient_id в данные формы
+
+                const data = Object.fromEntries(formData.entries());
+                // Получаем значение из поля datetime-local
+                const datetimeInput = document.getElementById('datetime_q').value;
+
+                // Преобразуем строку с датой и временем в формате datetime-local в ISO-строку
+                data.datetime_q = new Date(datetimeInput).toISOString();
+
+                try {
+                    const appointmentResponse = await fetch('/clinic/appointments/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams(data) // Используем URLSearchParams для отправки данных формы
+                    });
+                    
+                    fetchAppointments(); 
+
+                    const appointmentResult =   await appointmentResponse.json();
+                    window.location.href = window.location.href;
+                } catch (error) {
+                    alert(`Ошибка обновления данных пациента: ${error.message}`);
+                }
+            });
+
+            document.getElementById('editPatientForm').addEventListener('submit', submitEditPatientForm);
+
+            document.getElementById('deletePatientButton').addEventListener('click', deletePatient);
+
+        });
+
+        async function fillEditPatientModal() {
+    const patientId = "{{ patient_id }}";
+    try {
+        const response = await fetch(`/clinic/clinic_data/${patientId}`);
+        const patient = await response.json();
+        if (response.ok) {                
+            document.getElementById('editFullName').value = patient.full_name;
+            document.getElementById('editDirected').value = patient.directed;
+            document.getElementById('editBirthday').value = patient.birthday;
+            document.getElementById('editAddress').value = patient.address;
+            document.getElementById('editPolicyCMI').value = patient.policy_CMI;
+            document.getElementById('editSnils').value = patient.snils;
+            document.getElementById('editDocument').value = patient.document;
+            document.getElementById('editMilitaryUnit').value = patient.military_unit;
+            document.getElementById('editMilitaryRank').value = patient.military_rank;
+            document.getElementById('editBelonging').value = patient.belonging;
+            document.getElementById('editHostilities').value = patient.hostilities;
+            document.getElementById('editPersonalNumber').value = patient.personal_number;
+            document.getElementById('editMilitaryCommissariat').value = patient.military_commissariat;
+            document.getElementById('editMilitaryDistrict').value = patient.military_district;
+            document.getElementById('editPhoneNumber').value = patient.phone_number;
+            document.getElementById('editCardNumber').value = patient.card_number;
+
+            document.getElementById('editPatientInfo').value = patient.patient_info;
+
+            document.getElementById('editMedicalType').value = patient.medical_type;
+            document.getElementById('editHospitalizationInfo').value = patient.hospitalization_info;
+            document.getElementById('editVvkInfo').value = patient.vkk_info;
+
+
+
+            document.getElementById('editBelonging').value = patient.belonging; 
+  
+        } else {
+            throw new Error(patient.detail);
+        }
+    } catch (error) {
+        alert("Ошибка загрузки данных пациента: " + error.message);
+    }
+}
+
+
+        async function submitEditPatientForm(event) {
+            event.preventDefault();
+            const patientId = "{{ patient_id }}";
+
+            const formData = {
+                full_name: document.getElementById('editFullName').value,
+                directed: document.getElementById('editDirected').value,
+                birthday: document.getElementById('editBirthday').value,
+                address: document.getElementById('editAddress').value,
+                policy_CMI: document.getElementById('editPolicyCMI').value,
+                snils: document.getElementById('editSnils').value,
+                document: document.getElementById('editDocument').value,
+                military_unit: document.getElementById('editMilitaryUnit').value,
+                military_rank: document.getElementById('editMilitaryRank').value,
+                belonging: document.getElementById('editBelonging').value,
+                hostilities: document.getElementById('editHostilities').value,
+                personal_number: document.getElementById('editPersonalNumber').value,
+                military_commissariat: document.getElementById('editMilitaryCommissariat').value,
+                military_district: document.getElementById('editMilitaryDistrict').value,
+                phone_number: document.getElementById('editPhoneNumber').value,
+                card_number: document.getElementById('editCardNumber').value,
+                patient_info: document.getElementById('editPatientInfo').value,
+                medical_type: document.getElementById('editMedicalType').value,
+                vvk_info: document.getElementById('editVvkInfo').value,
+                hospitalization_info: document.getElementById('editHospitalizationInfo').value
+            };
+
+
+            try {
+                const response = await fetch(`/clinic/update_patient/${patientId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    alert('Данные пациента успешно обновлены');
+                    $('#editPatientModal').modal('hide');
+                    fetchPatientData();
+                } else {
+                    const error = await response.json();
+                    alert(`Ошибка обновления данных пациента: ${error.message}`);
+                }
+            } catch (error) {
+                alert(`Ошибка обновления данных пациента: ${error.message}`);
+            }
+        }
+    </script>
+    {% endblock %}
+</body>
+</html>

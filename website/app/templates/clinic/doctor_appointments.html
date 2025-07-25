@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Приёмы {{ doctor.full_name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+        h1 {
+            text-align: center;
+            padding: 20px;
+            color: #343a40;
+        }
+        .filter {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .filter input {
+            padding: 10px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .appointments {
+            width: 88%;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .appointment-card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            width: 88%;
+            margin: 10px 0;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            
+        }
+        .appointment-card:hover {
+            transform: scale(1.05);
+        }
+        .appointment-card h2 {
+            margin-top: 0;
+        }
+        .appointment-card p {
+            margin: 5px 0;
+        }
+        .appointment-card button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .appointment-card button:hover {
+            background-color: #0056b3;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .close {
+            color: #aaaaaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .appointment {
+            width: 100%;
+        }
+        .close:hover,
+        .close:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button[type="submit"] {
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button[type="submit"]:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+
+    {% block content %}
+    <h1>Приёмы {{ doctor.full_name }}</h1>
+    
+    <div class="filter">
+        <label for="date-filter">Фильтр по дате:</label>
+        <input type="date" id="date-filter" onchange="filterAppointments()">
+    </div>
+    
+    <h2>Активные приёмы</h2>
+    <div class="appointments" id="activeAppointments">
+        {% if active_appointments_by_date %}
+            {% for date, appointments in active_appointments_by_date.items() %}
+            <div class="appointment-card">
+                <h2>{{ date }}</h2>
+                <ul>
+                    {% for appointment in appointments %}
+                    <li class="appointment">
+                        <p><strong>Дата и время:</strong> {{ appointment.datetime }}</p>
+                        <p><strong>Заметка:</strong> {{ appointment.note }}</p>
+                        <p><strong>Отчёт врача:</strong> {{ appointment.doctor_report }}</p>
+                        <p><strong>Заметка врача:</strong> {{ appointment.doctor_note }}</p>
+                        <button onclick="openModal('{{ appointment.id }}', '{{ appointment.datetime }}', '{{ appointment.note }}', '{{ appointment.doctor_report }}', '{{ appointment.doctor_note }}', '{{ appointment.status }}')">Редактировать</button>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>Активных приёмов на выбранную дату не найдено.</p>
+        {% endif %}
+    </div>
+
+    <h2>Прошедшие приёмы</h2>
+    <div class="appointments" id="pastAppointments">
+        {% if past_appointments_by_date %}
+            {% for date, appointments in past_appointments_by_date.items() %}
+            <div class="appointment-card">
+                <h2>{{ date.strftime('%d.%m.%Y') }}</h2>
+                <ul>
+                    {% for appointment in appointments %}
+                    <li class="appointment">
+                        <p><strong>Пациент:</strong> {{ appointment.patient.full_name }}</p>
+                        <p><strong>Дата рождения:</strong> {{ appointment.patient.birthday if appointment.patient.birthday else 'Не указана' }}</p>
+                        <p><strong>Номер карты:</strong> {{ appointment.patient.card_number }}</p>
+                        <p><strong>Время:</strong> {{ appointment.datetime_q.strftime('%H:%M') }}</p>
+                        <p><strong>Заметка:</strong> {{ appointment.note if appointment.note else 'Отсутсвует заметка о пациенте'  }}</p>
+                        <p><strong>Отчёт врача:</strong> {{ appointment.doctor_report }}</p>
+                        <p><strong>Заметка врача:</strong> {{ appointment.doctor_note }}</p>
+                        <button onclick="openModal('{{ appointment.id }}', '{{ appointment.datetime }}', '{{ appointment.note }}', '{{ appointment.doctor_report }}', '{{ appointment.doctor_note }}', '{{ appointment.status }}')">Редактировать</button>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>Прошедших приёмов на выбранную дату не найдено.</p>
+        {% endif %}
+    </div>
+
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Редактировать приём</h2>
+            <form id="editForm" method="POST">
+                <input type="hidden" name="_method" value="PUT">
+                <input type="hidden" id="doctorId" value="{{ doctor.id }}"> <!-- Скрытое поле для doctorId -->
+                
+                <label for="doctor_report">Отчёт врача:</label>
+                <textarea id="doctor_report" name="doctor_report" required></textarea><br><br>
+                <label for="doctor_note">Заметка врача:</label>
+                <textarea id="doctor_note" name="doctor_note" required></textarea><br><br>
+                
+                <button type="button" onclick="submitEditForm()">Сохранить изменения</button>
+            </form>
+        </div>
+    </div>
+    
+    
+    
+    
+    <script>
+        function submitEditForm() {
+    const appointmentId = document.getElementById('editForm').getAttribute('data-appointment-id');
+    const doctorId = document.getElementById('doctorId').value;
+
+    const formData = new FormData(document.getElementById('editForm'));
+
+    // Преобразуем FormData в объект
+    const data = {};
+    formData.forEach((value, key) => {
+        data[key] = value;
+    });
+
+    // Отправляем данные как JSON
+    fetch(`/clinic/doctors/${doctorId}/appointments/${appointmentId}/update`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json', // Указываем тип контента
+        },
+        body: JSON.stringify(data), // Преобразуем объект в JSON
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(error => {
+                alert(`Ошибка: ${error.detail}`);
+            });
+        }
+        location.reload();
+    })
+    .catch(error => console.error('Ошибка:', error));
+}
+
+
+
+
+
+
+
+
+
+        function filterAppointments() {
+            var input = document.getElementById('date-filter');
+            var filter = input.value;
+            var url = new URL(window.location.href);
+            if (filter) {
+                url.searchParams.set('date', filter);
+            } else {
+                url.searchParams.delete('date');
+            }
+            window.location.href = url.toString();
+        }
+
+        function openModal(appointmentId, datetime, note, doctorReport, doctorNote, status) {
+                // Заполняем поля в модальном окне
+                document.getElementById('doctor_report').value = doctorReport;
+                document.getElementById('doctor_note').value = doctorNote;
+                // Сохраняем идентификатор приема в скрытом поле формы
+                document.getElementById('editForm').setAttribute('data-appointment-id', appointmentId);
+                
+                var modal = document.getElementById('myModal');
+                modal.style.display = 'block';
+            }
+
+
+        function closeModal() {
+            var modal = document.getElementById('myModal');
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            var modal = document.getElementById('myModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        };
+    </script>
+        {% endblock %}
+</body>
+</html>

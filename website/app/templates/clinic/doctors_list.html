@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Врачи поликликиники</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+        h1 {
+            text-align: center;
+            padding: 20px;
+            color: #343a40;
+        }
+        .search-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .search-container input {
+            padding: 10px;
+            width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .doctor-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 0;
+            margin: 0;
+        }
+        .doctor-card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            width: 30%;
+            margin: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .doctor-card:hover {
+            transform: scale(1.05);
+        }
+        .doctor-card a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .doctor-card a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+    
+    {% block content %}
+    <h1>Список врачей поликликиники</h1>
+    <div class="search-container">
+        <input type="text" id="searchInput" onkeyup="filterDoctors()" placeholder="Используйте для поиска...">
+    </div>
+    <ul class="doctor-list" id="doctorList">
+        {% for doctor in doctors %}
+        <li class="doctor-card">
+            <a href="/clinic/doctors/{{ doctor.id }}/appointments">{{ doctor.full_name }} {{doctor.doctor_type}}</a>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <script>
+        function filterDoctors() {
+            var input, filter, ul, li, a, i, txtValue;
+            input = document.getElementById('searchInput');
+            filter = input.value.toLowerCase();
+            ul = document.getElementById("doctorList");
+            li = ul.getElementsByClassName('doctor-card');
+
+            for (i = 0; i < li.length; i++) {
+                a = li[i].getElementsByTagName("a")[0];
+                txtValue = a.textContent || a.innerText;
+                if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                    li[i].style.display = "";
+                } else {
+                    li[i].style.display = "none";
+                }
+            }
+        }
+    </script>
+    {% endblock %}
+</body>
+</html>

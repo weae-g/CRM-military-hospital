@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/img/logo_first.png" type="image/png">
+    <title>Документы и ресурсы образца</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding-top: 20px; }
+        .container { max-width: 800px; }
+        .card { margin-bottom: 20px; }
+        .card-header { background-color: #007bff; color: white; }
+        .footer { text-align: center; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+    
+    {% block content %}
+    <div class="container">
+        <h1 class="text-center">Документы осмотра врачей образца</h1>
+        <div class="list-group">
+            <a href="/docs/clinic_sample/VШаблон осмотра ЛОР-врача.pdf" target="_blank" class="list-group-item list-group-item-action">
+                <h5 class="mb-1">Осмотр ЛОР врача</h5>
+                <p class="mb-1">Шаблон осмотра пациента лор-врачём.</p>
+            </a>
+            <!--<a href="/path/to/document2.pdf" target="_blank" class="list-group-item list-group-item-action">
+                <h5 class="mb-1">Документ 2</h5>
+                <p class="mb-1">Краткое описание документа 2, для более детального понимания его содержания.</p>
+            </a>
+            <a href="/path/to/document3.pdf" target="_blank" class="list-group-item list-group-item-action">
+                <h5 class="mb-1">Документ 3</h5>
+                <p class="mb-1">Краткое описание документа 3, указывающее на важные аспекты и назначение документа.</p>
+            </a>-->
+        </div>
+        <h1 class="text-center">Документы консультаций врачей</h1>
+        <div class="list-group">
+            <a href="/docs/clinic_sample/VКонсультация врача физиотерапевта.pdf" target="_blank" class="list-group-item list-group-item-action">
+                <h5 class="mb-1">Консультация врача-физиотерапевта</h5>
+                <p class="mb-1">Шаблон консультации пациента врачём-физиотерапевтом.</p>
+            </a>
+        </div>
+        <h2 class="text-center mt-4">Сетевые ресурсы</h2>
+        <div class="list-group">
+            <a href="file://E:/%D0%93%D0%BB%D0%B0%D0%B2%D0%BD%D1%8B%D0%B9%20%D0%BA%D0%BE%D1%80%D0%BF%D1%83%D1%81/%D0%A8%D0%90%D0%91%D0%9B%D0%9E%D0%9D%D0%AB%20%D0%94%D0%9B%D0%AF%20%D0%9E%D0%A4%D0%9E%D0%A0%D0%9C%D0%9B%D0%95%D0%9D%D0%98%D0%AF%20%D0%94%D0%9E%D0%9A%D0%A3%D0%9C%D0%95%D0%9D%D0%A2%D0%9E%D0%92/%D0%A8%D0%B0%D0%B1%D0%BB%D0%BE%D0%BD%D1%8B%20%D0%BE%D1%81%D0%BC%D0%BE%D1%82%D1%80%D0%BE%D0%B2%20%D0%B2%D1%80%D0%B0%D1%87%D0%B5%D0%B9%20%D0%B4%D0%BB%D1%8F%20%D1%81%D0%B0%D0%B9%D1%82%D0%B0/" class="list-group-item list-group-item-action">
+                <h5 class="mb-1">Шаблоны</h5>
+                <p class="mb-1">Расположение папки шаблонов осмотров.</p>
+            </a>
+            
+            
+            
+            <!--<a href="file://networkpath/folder2" class="list-group-item list-group-item-action">
+                <h5 class="mb-1">Ресурс 2</h5>
+                <p class="mb-1">Описание доступа к ресурсу 2.</p>
+            </a>
+            <a href="file://networkpath/folder3" class="list-group-item list-group-item-action">
+                <h5 class="mb-1">Ресурс 3</h5>
+                <p class="mb-1">Описание доступа к ресурсу 3.</p>
+            </a>-->
+        </div>
+    </div>
+    <div class="footer">
+        <p>&copy; 2024 "354 ВГ" МО РФ</p>
+    </div>
+
+    <script src="/js/jquery-3.7.1.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    {% endblock %}
+</body>
+</html>

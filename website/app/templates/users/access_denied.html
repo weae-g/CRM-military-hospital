@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/img/logo_first.png" type="image/png">
+    <title>Доступ запрещен</title>
+    <style>
+        .body { 
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            height: 50vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .logo {
+            max-width: 250px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+    {% block content %}
+    <div class="body">
+      
+        <img src="/img/logo_first.png" alt="Логотип" class="logo">
+        <h1>Доступ запрещен</h1>
+        <p>Вы не имеете прав для доступа к этому ресурсу.</p>
+    </div>
+    {% endblock %}  
+</body>
+</html>

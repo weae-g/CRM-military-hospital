@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/img/logo_first.png" type="image/png">
+    <title>Сведения по пациентам</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center; /* Центрируем текст в ячейках */
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .highlight {
+            background-color: orange; /* Цвет для выделения строк */
+        }
+        .hidden {
+            display: none; /* Стиль для скрытия элементов */
+        }
+        .notification-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 8px; /* Расстояние между кнопками */
+        }
+        .notification-button {
+            background-color: #4CAF50; /* Зеленый цвет для кнопки госпитализации */
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px; /* Скругленные углы */
+        }
+        .notification-button.admission {
+            background-color: #2196F3; /* Синий цвет для кнопки госпитализации */
+        }
+        .notification-button.discharged {
+            background-color: #f44336; /* Красный цвет для кнопки выписки */
+        }
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+    
+    {% block content %}
+    
+    <h2>Сведения по пациентам</h2>
+
+    
+
+    <label for="searchName">Поиск по ФИО:</label>
+    <input type="text" id="searchName" onkeyup="searchByName()">
+
+    <label for="searchDate">Поиск по дате госпитализации:</label>
+    <input type="date" id="searchDate" onchange="searchByDate()">
+
+    <label for="searchDateС">Поиск по дате выписки:</label>
+    <input type="date" id="searchDateС" onchange="searchByDate_1()">
+
+
+
+    <a href="{{ download_link }}" class="button">Скачать данные</a>
+
+    <table id="patientTable">
+        <thead>
+            <tr>
+                {% if data|length > 0 %}
+                    {% for column in data[0].keys() %}
+                        {% if column not in ['нарушение', 'highlight'] %} <!-- Исключаем столбец 'нарушение' и 'highlight' -->
+                            <th>{{ column }}</th>
+                        {% endif %}
+                    {% endfor %}
+                    <th>Уведомления</th> <!-- Добавляем новый столбец для кнопок -->
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for patient in data %}
+               
+                    <tr class="{{ 'highlight' if patient.get('Койко-дни', 0) > 21 else '' }}">
+                        {% for key, value in patient.items() %}
+                            {% if key not in ['нарушение', 'highlight'] %} <!-- Исключаем столбец 'нарушение' и 'highlight' -->
+                                <td>{{ value }}</td>
+                            {% endif %}
+                        {% endfor %}
+                        <td class="notification-buttons"> <!-- Добавляем кнопки в новую ячейку -->
+                            {% if title == 'Сведения по пациентам РКБ' %}
+                                <a class="notification-button admission" href="/otx/generate_admission_notification_rkb?patient_id={{ loop.index0 }}">Госпитализация</a>
+                                <a class="notification-button discharged" href="/otx/generate_discharge_notification_rkb?patient_id={{ loop.index0 }}">Выписка</a>
+                            {% elif title == 'Сведения по пациентам ГКБ7' %}
+                                <a class="notification-button admission" href="/otx/generate_admission_notification_gkb?patient_id={{ loop.index0 }}">Госпитализация</a>
+                                <a class="notification-button discharged" href="/otx/generate_discharge_notification_gkb?patient_id={{ loop.index0 }}">Выписка</a>
+                            {% else %}
+                                <a class="notification-button admission" href="/otx/generate_admission_notification_gvv?patient_id={{ loop.index0 }}">Госпитализация</a>
+                                <a class="notification-button discharged" href="/otx/generate_discharge_notification_gvv?patient_id={{ loop.index0 }}">Выписка</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+           
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        function searchByName() {
+            const input = document.getElementById('searchName').value.toLowerCase();
+            const table = document.getElementById('patientTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const nameCell = rows[i].getElementsByTagName('td')[4]; // Предполагается, что ФИО в первом столбце
+                if (nameCell) {
+                    const name = nameCell.textContent.toLowerCase();
+                    rows[i].style.display = name.includes(input) ? '' : 'none';
+                }
+            }
+        }
+
+        function searchByDate() {
+            const input = document.getElementById('searchDate').value;
+            const table = document.getElementById('patientTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const dateCell = rows[i].getElementsByTagName('td')[8]; // Предполагается, что дата госпитализации в восьмом столбце
+                if (dateCell) {
+                    const date = dateCell.textContent.split(" ")[0]; // Извлекаем только дату
+                    const formattedDate = formatDate(input); // Форматируем дату ввода для сравнения
+                    rows[i].style.display = date === formattedDate ? '' : 'none';
+                }
+            }
+        }
+
+        function searchByDate_1() {
+            const input = document.getElementById('searchDateС').value;
+            const table = document.getElementById('patientTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const dateCell = rows[i].getElementsByTagName('td')[10]; // Предполагается, что дата выписки в десятом столбце
+                if (dateCell) {
+                    const date = dateCell.textContent.split(" ")[0]; // Извлекаем только дату
+                    const formattedDate = formatDate(input); // Форматируем дату ввода для сравнения
+                    rows[i].style.display = date === formattedDate ? '' : 'none';
+                }
+            }
+        }
+
+        function formatDate(input) {
+            const date = new Date(input);
+            const day = ("0" + date.getDate()).slice(-2);
+            const month = ("0" + (date.getMonth() + 1)).slice(-2);
+            const year = date.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+
+        function sendAdmissionNotification(patientId) {
+            alert(`Отправлено уведомление о госпитализации для пациента с ID: ${patientId}`);
+            // Здесь можно добавить код для отправки реального уведомления
+        }
+
+        function sendDischargeNotification(patientId) {
+            alert(`Отправлено уведомление о выписке для пациента с ID: ${patientId}`);
+            // Здесь можно добавить код для отправки реального уведомления
+        }
+
+        
+
+    </script>
+    {% endblock %}
+    
+</body>
+</html>

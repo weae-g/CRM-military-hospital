@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clinic Doctors</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { width: 80%; margin: 0 auto; }
+        h1 { text-align: center; }
+        .cards { display: flex; flex-wrap: wrap; justify-content: space-around; }
+        .card { border: 1px solid #ccc; border-radius: 10px; padding: 20px; margin: 10px; width: 200px; text-align: center; }
+        .card h3 { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Doctors of the Clinic</h1>
+        <div class="cards" id="doctorsCards">
+            <!-- Cards will be added here dynamically -->
+        </div>
+    </div>
+    <script>
+        function loadDoctors() {
+            fetch('/doctors_of_the_clinic/')
+                .then(response => response.json())
+                .then(data => {
+                    const cardsContainer = document.getElementById('doctorsCards');
+                    cardsContainer.innerHTML = '';
+                    data.forEach(doctor => {
+                        const card = document.createElement('div');
+                        card.classList.add('card');
+                        card.innerHTML = `
+                            <h3>${doctor.full_name}</h3>
+                            <p>Тип: ${doctor.doctor_type}</p>
+                            <p>Кабинет: ${doctor.cabinet}</p>
+                        `;
+                        cardsContainer.appendChild(card);
+                    });
+                });
+        }
+
+        // Load doctors on page load
+        document.addEventListener('DOMContentLoaded', loadDoctors);
+    </script>
+</body>
+</html>

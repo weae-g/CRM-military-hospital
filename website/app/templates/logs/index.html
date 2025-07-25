@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Log Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        #log-container {
+            white-space: pre-wrap;
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 500px;
+            overflow-y: auto;
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Log Viewer</h1>
+    <div id="log-container">Loading...</div>
+    <script>
+        async function fetchLog() {
+            try {
+                const response = await fetch('/logs/log');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const log = await response.text();
+                document.getElementById('log-container').textContent = log;
+            } catch (error) {
+                console.error('Failed to fetch log:', error);
+                document.getElementById('log-container').textContent = 'Failed to load log';
+            }
+        }
+
+        // Fetch log every 5 seconds
+        setInterval(fetchLog, 5000);
+
+        // Initial fetch
+        fetchLog();
+    </script>
+</body>
+</html>

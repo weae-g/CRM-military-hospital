@@ -1,0 +1,141 @@
+/* breakpoint in pixels for responsive */
+/* dropdown Menu core scss */
+ul {
+  display: inline-block;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  z-index: 100;
+}
+ul li {
+  position: relative;
+  display: inline-block;
+}
+ul li:hover > ul {
+  display: inherit;
+}
+ul li:hover > ul li {
+  display: list-item;
+}
+ul li a {
+  display: block;
+}
+ul li ul {
+  display: none;
+  position: absolute;
+  /* optional: submenu is same width than parent entry width */
+  min-width: 100%;
+  /* optional: submenu background color */
+  background-color: #aaa;
+}
+ul li ul ul {
+  left: 100%;
+  top: 0;
+}
+
+/* Responsiveness core scss */
+@media (max-width: 980px) {
+  ul {
+    display: inherit;
+  }
+  ul:first-child:before {
+    background-color: #222;
+    content: "Меню";
+    display: block;
+    padding: 1rem;
+    color: #fff;
+    text-align: right;
+  }
+  ul:active li, ul:focus li, ul:hover li {
+    display: list-item;
+  }
+  ul li {
+    display: none;
+    background-color: #aaa;
+  }
+  ul li ul {
+    position: relative;
+    min-width: auto;
+    display: inherit;
+    border-top: 2px solid #999;
+  }
+  ul li ul li {
+    display: block;
+  }
+  ul li ul li a {
+    position: relative;
+  }
+  ul li ul li a:before {
+    content: "";
+    padding-left: 1.5%;
+  }
+  ul li ul li ul {
+    left: 0;
+  }
+}
+/* ------------- optional styling below ------------ */
+/* Following declarations are OPTIONAL */
+body {
+  background-color: #ddd;
+  font-family: Arial;
+}
+
+html,
+body {
+  margin: 25px;
+}
+
+body {
+  overflow-Y: scroll;
+}
+
+nav {
+  background-color: #333;
+  margin-bottom: 50px;
+}
+nav ul li:hover {
+  background-color: #888;
+}
+
+a {
+  color: #fff;
+  text-decoration: none;
+  padding: 15px;
+}
+a:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+li > a:after {
+  content: " +";
+  float: right;
+  margin-left: 5px;
+}
+
+li > a:only-child:after {
+  content: "";
+}
+
+div {
+  font-size: 2rem;
+}
+div h1 {
+  border-left: 7.5px solid #bbb;
+  font-size: 2rem;
+  padding-left: 15px;
+  display: inline-block;
+  font-weight: 100;
+}
+div div {
+  font-size: 1rem;
+  padding-left: 22.5px;
+  font-style: italic;
+  color: #666;
+}
+div div a {
+  color: #333;
+  padding: 0;
+  text-decoration: underline;
+}
+
+/*# sourceMappingURL=hat.css.map */

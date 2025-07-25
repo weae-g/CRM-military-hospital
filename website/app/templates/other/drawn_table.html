@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/img/logo_first.png" type="image/png">
+    <title>Сведения по пациентам</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .highlight {
+            background-color: orange; /* Цвет для выделения строк */
+        }
+        .hidden {
+            display: none; /* Стиль для скрытия элементов */
+        }
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+    
+    {% block content %}
+    
+    <h2>Сведения по пациентам</h2>
+
+    <label for="searchName">Поиск по ФИО:</label>
+    <input type="text" id="searchName" onkeyup="searchByName()">
+
+    <label for="searchDate">Поиск по дате госпитализации:</label>
+    <input type="date" id="searchDate" onchange="searchByDate()">
+
+    <label for="searchDateС">Поиск по дате выписки:</label>
+    <input type="date" id="searchDateС" onchange="searchByDate_1()">
+
+    <table id="patientTable">
+        <thead>
+            <tr>
+                {% if data|length > 0 %}
+                    {% for column in data[0].keys() %}
+                        {% if column not in ['нарушение'] %} <!-- Исключаем столбец 'нарушение' -->
+                            <th>{{ column }}</th>
+                        {% endif %}
+                    {% endfor %}
+                    {% if has_violation %} <!-- Проверяем наличие нарушений -->
+                        <th class="{{ 'hidden' if not has_violation else '' }}">Действия</th>
+                    {% endif %}
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for patient in data %}
+                {% if patient.get('нарушение') %} <!-- Отображаем только те строки, у которых нарушение -->
+                    <tr class="{{ 'highlight' if patient.get('Койко-дни', 0) > 21 else '' }}">
+                        {% for key, value in patient.items() %}
+                            {% if key not in ['нарушение'] %} <!-- Исключаем столбец 'нарушение' -->
+                                <td>{{ value }}</td>
+                            {% endif %}
+                        {% endfor %}
+                        {% if has_violation %}
+                        <td><a href="/otx/generate_report?patient_id={{ loop.index0 }}">Скачать отчет о нарушении</a></td> <!-- Ссылка на генерацию отчета -->
+                        {% else %}
+                            <td></td>
+                        {% endif %}
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+ 
+    <script>
+        function searchByName() {
+            const input = document.getElementById('searchName').value.toLowerCase();
+            const table = document.getElementById('patientTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const nameCell = rows[i].getElementsByTagName('td')[3]; // Измените индекс на правильный
+                if (nameCell) {
+                    const name = nameCell.textContent.toLowerCase();
+                    rows[i].style.display = name.includes(input) ? '' : 'none';
+                }
+            }
+        }
+
+        function searchByDate() {
+            const input = document.getElementById('searchDate').value;
+            const table = document.getElementById('patientTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const dateCell = rows[i].getElementsByTagName('td')[8]; // Предполагается, что дата госпитализации в восьмом столбце
+                if (dateCell) {
+                    const date = dateCell.textContent.split(" ")[0]; // Извлекаем только дату
+                    const formattedDate = formatDate(input); // Форматируем дату ввода для сравнения
+                    rows[i].style.display = date === formattedDate ? '' : 'none';
+                }
+            }
+        }
+
+        function searchByDate_1() {
+            const input = document.getElementById('searchDateС').value;
+            const table = document.getElementById('patientTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const dateCell = rows[i].getElementsByTagName('td')[10]; // Предполагается, что дата выписки в десятом столбце
+                if (dateCell) {
+                    const date = dateCell.textContent.split(" ")[0]; // Извлекаем только дату
+                    const formattedDate = formatDate(input); // Форматируем дату ввода для сравнения
+                    rows[i].style.display = date === formattedDate ? '' : 'none';
+                }
+            }
+        }
+
+        function formatDate(input) {
+            const date = new Date(input);
+            const day = ("0" + date.getDate()).slice(-2);
+            const month = ("0" + (date.getMonth() + 1)).slice(-2);
+            const year = date.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+    </script>
+    {% endblock %}
+    
+</body>
+</html>

@@ -1,0 +1,64 @@
+<h2>Детали пациента</h2>
+<p><strong>ФИО:</strong> <span id="full_name" contenteditable="false">{{ patient.full_name }}</span></p>
+<p><strong>Дата рождения:</strong> <span id="birthday" contenteditable="false">{{ patient.birthday.strftime('%d.%m.%Y') if patient.birthday else '' }}</span></p>
+<p><strong>Адрес:</strong> <span id="address" contenteditable="false">{{ patient.address }}</span></p>
+<p><strong>Номер карты:</strong> <span id="card_number" contenteditable="false">{{ patient.card_number }}</span></p>
+<p><strong>Полис ОМС:</strong> <span id="policy_CMI" contenteditable="false">{{ patient.policy_CMI }}</span></p>
+<p><strong>СНИЛС:</strong> <span id="snils" contenteditable="false">{{ patient.snils }}</span></p>
+<p><strong>Документ:</strong> <span id="document" contenteditable="false">{{ patient.document }}</span></p>
+<p><strong>Воинская часть:</strong> <span id="military_unit" contenteditable="false">{{ patient.military_unit }}</span></p>
+<p><strong>Воинское звание:</strong> <span id="military_rank" contenteditable="false">{{ patient.military_rank }}</span></p>
+<p><strong>Принадлежность:</strong> <span id="belonging" contenteditable="false">{{ patient.belonging }}</span></p>
+<p><strong>Участие в боевых действиях:</strong> <span id="hostilities" contenteditable="false">{{ 'Да' if patient.hostilities else 'Нет' }}</span></p>
+<p><strong>Личный номер:</strong> <span id="personal_number" contenteditable="false">{{ patient.personal_number }}</span></p>
+<p><strong>Военный комиссариат:</strong> <span id="military_commissariat" contenteditable="false">{{ patient.military_commissariat }}</span></p>
+<p><strong>Военный округ:</strong> <span id="military_district" contenteditable="false">{{ patient.military_district }}</span></p>
+<p><strong>Номер телефона:</strong> <span id="phone_number" contenteditable="false">{{ patient.phone_number }}</span></p>
+<p><strong>Тип медицинской помощи:</strong> <span id="medical_type" contenteditable="false">{{ patient.medical_type }}</span></p>
+<p><strong>Информация о пациенте:</strong> <span id="patient_info" contenteditable="false">{{ patient.patient_info }}</span></p>
+<p><strong>Информация о ВВК:</strong> <span id="vkk_info" contenteditable="false">{{ patient.vkk_info }}</span></p>
+<p><strong>Информация о госпитализации:</strong> <span id="hospitalization_info" contenteditable="false">{{ patient.hospitalization_info }}</span></p>
+<button id="editButton" onclick="enableEditing()">Редактировать</button>
+<button id="saveButton" onclick="saveChanges({{ patient.id }})" style="display:none;">Сохранить</button>
+<h3>Приёмы</h3>
+<ul id="appointments">
+    {% for appointment in appointments %}
+    <li>
+        <span contenteditable="false">{{ appointment.datetime_q.strftime('%d.%m.%Y %H:%M') }}</span> - 
+        <span contenteditable="false">{{ appointment.doctor_report }}</span>
+        <button onclick="deleteAppointment({{ appointment.id }})">Удалить</button>
+    </li>
+    {% endfor %}
+</ul>
+<button onclick="addAppointment()">Добавить Приём</button>
+
+
+<h3>Госпитализации</h3>
+<ul id="hospitalizations">
+    {% for hospitalization in hospitalizations %}
+    <li>
+        <span contenteditable="false">{{ hospitalization.date.strftime('%d.%m.%Y') }}</span> - 
+        <span contenteditable="false">{{ hospitalization.diagnosis }}</span>
+        <button onclick="deleteHospitalization({{ hospitalization.id }})">Удалить</button>
+    </li>
+    {% endfor %}
+</ul>
+<button onclick="addHospitalization()">Добавить Госпитализацию</button>
+
+<h3>ВВК</h3>
+<ul id="vvks">
+    {% for vvk in vvks %}
+    <li>
+        <span contenteditable="false">{{ vvk.vvk_date.strftime('%d.%m.%Y') }}</span> - 
+        <span contenteditable="false">{{ vvk.conclusion }}</span>
+        <button onclick="deleteVVK({{ vvk.id }})">Удалить</button>
+    </li>
+    {% endfor %}
+</ul>
+<button onclick="addVVK()">Добавить ВВК</button>
+
+<!-- Кнопки для редактирования и сохранения -->
+<button id="editButton" onclick="enableEditing()">Редактировать</button>
+<button id="saveButton" onclick="saveChanges({{ patient.id }})" style="display:none;">Сохранить</button>
+
+

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Новый пациент</title>
+    <style>
+        body {
+            min-height: 100vh; /* instead of height: 100vh */
+            overflow-y: auto; /* allows scrolling */
+        }
+
+        .container {
+            max-width: 800px;
+            width: 90%; /* adjust width to be more responsive */
+            padding: 30px;
+            margin: 20px auto; /* ensures margin on all sides */
+            overflow: auto; /* adds scrollbars if content overflows */
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: block;
+            color: #000000;
+        }
+        input[type="text"], input[type="date"], select {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        select {
+            background-color: #ccc;
+            -webkit-appearance: none;
+            color: #000000;
+            font-size: 16px;
+            -moz-appearance: none;
+            appearance: none;
+            background: url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>") no-repeat right 10px center/12px 12px;
+            cursor: pointer;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #4cae4c;
+        }
+        input[type="text"]:focus, input[type="date"]:focus, select:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+    </style>    
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/all.min.css" rel="stylesheet">
+    <link rel="icon" href="/img/logo_first.png" type="image/png">
+</head>
+<body>
+    <button onclick="history.back()" class="btn btn-secondary"><- Вернуться назад</button>
+    <div class="container"> 
+        <h1>Добавление нового пациента на госпитализацию</h1>
+        <form action="/pacients/passport_data/" method="post">
+            <label for="full_name">Полное имя:</label>
+            <input type="text" id="full_name" name="full_name" required>
+
+            <label for="birthday_date">Дата рождения:</label>
+            <input type="date" id="birthday_date" name="birthday_date" min="1900-01-01" required>
+            <div class="form-group">
+                <label for="service_basis">Контингент:</label>
+                <select id="service_basis" name="service_basis" class="form-control mb-2" required>
+                    <option value="Офицеры, прапорщики">Офицеры, прапорщики</option>
+                    <option value="Военнослужащий, призванный по мобилизации">Военнослужащий, призванный по мобилизации</option>
+                    <option value="Военнослужащий по контракту">Военнослужащий по контракту</option>
+                    <option value="Военнослужащий по призыву">Военнослужащий по призыву</option>
+                    <option value="Курсант 1 курса (призывник)">Курсант 1 курса (призывник)</option>
+                    <option value="Курсант 2-4 курса">Курсант 2-4 курса</option>
+                    <option value="Прочие (ЛНР и ДНР)">Прочие (ЛНР и ДНР)</option>
+                    <option value="Пенсионеры МО">Пенсионеры МО</option>
+                    <option value="ЧСВ запаса, кадров">ЧСВ запаса, кадров</option>
+                    <option value="Шторм V">Шторм V</option>
+                    <option value="Шторм Z">Шторм Z</option>
+                    <option value="Прочие">Прочие</option>
+                </select>
+            </div>
+            
+            <label for="personal_data">Личные номер:</label>
+            <input type="text" id="personal_data" name="personal_data">
+
+            <label for="personal_document">Номер военного билета:</label>
+            <input type="text" id="personal_document" name="personal_document">
+
+            <label for="military_rank">Воинское звание:</label>
+            <input type="text" id="military_rank" name="military_rank" list="ranks" oninput="validateInput()">
+            <datalist id="ranks">
+                <option value="Рядовой">
+                <option value="Матрос">
+                <option value="Ефрейтор">
+                <option value="Старший матрос">
+                <option value="Младший сержант">
+                <option value="Старшина 2-й статьи">
+                <option value="Сержант">
+                <option value="Старшина 1-й статьи">
+                <option value="Старший сержант">
+                <option value="Главный старшина">
+                <option value="Старшина">
+                <option value="Главный корабельный старшина">
+                <option value="Прапорщик">
+                <option value="Мичман">
+                <option value="Старший прапорщик">
+                <option value="Старший мичман">
+                <option value="Младший лейтенант">
+                <option value="Лейтенант">
+                <option value="Старший лейтенант">
+                <option value="Капитан">
+                <option value="Капитан-лейтенант">
+                <option value="Майор">
+                <option value="Капитан III ранга">
+                <option value="Подполковник">
+                <option value="Капитан II ранга">
+                <option value="Полковник">
+                <option value="Капитан 1-го ранга">
+                <option value="Генерал-майор">
+                <option value="Контр-адмирал">
+                <option value="Генерал-лейтенант">
+                <option value="Вице-адмирал">
+                <option value="Генерал-полковник">
+                <option value="Адмирал">
+                <option value="Генерал армии">
+                <option value="Адмирал флота, маршал рода войск">
+                <option value="Главный маршал рода войск">
+                <option value="Маршал Советского Союза">
+                <option value="Адмирал Флота Советского Союза">
+                <option value="Действительный государственный советник таможенной службы">
+                <option value="Государственный советник таможенной службы 1 ранга">
+                <option value="Государственный советник таможенной службы II ранга">
+                <option value="Государственный советник таможенной службы III ранга">
+                <option value="Советник таможенной службы 1 ранга">
+                <option value="Советник таможенной службы II ранга">
+                <option value="Советник таможенной службы III ранга">
+                <option value="Инспектор таможенной службы 1 ранга">
+                <option value="Инспектор таможенной службы II ранга">
+                <option value="Инспектор таможенной службы III ранга">
+                <option value="Курсант">
+                <option value="Другое">
+            </datalist>
+
+            <label for="directions">Кем направлен:</label>
+            <select id="directions" name="directions" class="form-control">
+                <option value="">Выберите источник направления</option>
+                <option value="Нетоложное состояниие">Нетоложное состояниие</option>
+                <option value="Воинская часть">Воинская часть</option>
+                <option value="Поликлиника">Поликлиника</option>
+                <option value="Другое медицинское учреждение">Другое медицинское учреждение</option>
+                <option value="Военная комендатура">Военная комендатура</option>
+                <option value="Самообращение">Самообращение</option>
+                <option value="Другое">Другое</option>
+            </select>
+            
+
+            <label for="date_of_illness">Дата заболевания:</label>
+            <input type="date" id="date_of_illness" name="date_of_illness" min="1900-01-01">
+
+            <label for="address">Адрес:</label>
+            <input type="text" id="address" name="address">
+
+            <label for="military_unit">Воинская часть:</label>
+            <input type="text" id="military_unit" name="military_unit">
+
+            <label for="history_number">Номер истории:</label>
+            <input type="text" id="history_number" name="history_number">
+
+            <label for="phone_number">Телефонный номер:</label>
+            <input type="text" id="phone_number" name="phone_number">
+
+            <label for="branch">Отделение:</label>
+            <select id="branch" name="branch">
+                <option value="Выберите отделение">Выберите отделение</option>
+                <option value="Терапевтическое отделение">Терапевтическое отделение</option>
+                <option value="Кожно-венерологическое отделение">Кожно-венерологическое отделение</option>
+                <option value="Неврологическое отделение">Неврологическое отделение</option>
+                <option value="Инфекционное отделение">Инфекционное отделение</option>
+                <option value="Хирургическое отделение">Хирургическое отделение</option>
+            </select>
+
+            <label for="first_diagnosis">Диагноз при поступлении:</label>
+            <input type="text" id="first_diagnosis" name="first_diagnosis">
+
+            
+            <label for="unit_commander">Должность. Номер для связи с местом службы:</label>
+            <input type="text" id="unit_commander" name="unit_commander">
+
+            <label for="after_hostilities">Поступил после СВО, боевых действий</label>
+            <input type="checkbox" id="after_hostilities" name="after_hostilities">
+            
+
+            <button type="submit">Добавить</button>
+        </form>
+    </div>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+                const today = new Date().toISOString().split('T')[0]; // Получаем сегодняшнюю дату
+                document.getElementById('birthday_date').setAttribute('max', today); // Устанавливаем max на сегодня
+            });
+
+            document.addEventListener('DOMContentLoaded', (event) => {
+            const today = new Date().toISOString().split('T')[0]; // Получаем сегодняшнюю дату
+            document.getElementById('date_of_illness').setAttribute('max', today); // Устанавливаем max на сегодня
+        });
+        document.addEventListener('DOMContentLoaded', function() {
+            // Получаем все элементы input внутри формы
+            const inputs = document.querySelectorAll('input, select');
+
+            // Функция для имитации нажатия клавиши Tab
+            function handleEnterKey(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();  // Предотвращаем стандартное действие Enter (отправка формы)
+                    const formElements = Array.from(inputs);
+                    const index = formElements.indexOf(event.target);
+                    const nextElement = formElements[index + 1];
+                    nextElement.focus();  // Фокусируемся на следующем элементе
+                }
+            }
+
+            // Добавляем обработчик события keydown для каждого input в форме
+            inputs.forEach(input => {
+                input.addEventListener('keydown', handleEnterKey);
+            });
+        });
+
+
+        function validateInput() {
+            var input = document.getElementById('military_rank');
+            var list = document.getElementById('ranks');
+            var options = list.querySelectorAll('option');
+            var inputValid = Array.from(options).some(option => option.value === input.value);
+            if (!inputValid) {
+                input.setCustomValidity('Выберите воинское звание из списка.');
+            } else {
+                input.setCustomValidity('');
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+        const form = document.querySelector("form");
+        form.addEventListener("submit", function(event) {
+            event.preventDefault();  // Отменяем стандартную отправку формы
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();  // Возвращаем json, если статус ответа успешный
+                }
+                throw new Error('Something went wrong');  // Генерируем ошибку, если ответ сервера неудачен
+            })
+            .then(data => {
+                alert('Успешно добавлено!');  // Отображаем уведомление об успехе
+                window.location.href = '/pacients/hospitalized_patients_data_on_date/';  // Перенаправляем пользователя
+            })
+            .catch(error => {
+                alert('Произошла ошибка: ' + error);  // Отображаем уведомление об ошибке
+            });
+        });
+    });
+    
+        </script>
+</body>
+</html>

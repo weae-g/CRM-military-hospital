@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>База данных пациентов</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { width: 80%; margin: 0 auto; }
+        h1 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table, th, td { border: 1px solid black; }
+        th, td { padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        form { margin-top: 20px; }
+        label { display: block; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+    
+    {% block content %}
+    <div class="container">
+        <h1>База данных пациентов</h1>
+
+        <h2>Список всех пациентов</h2>
+        <table id="patientsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>ФИО</th>
+                    <th>Пол</th>
+                    <th>Дата рождения</th>
+                    <th>Адрес</th>
+                    <th>Дата регистрации</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Строки будут добавлены сюда динамически -->
+            </tbody>
+        </table>
+
+        <h2>Фильтрация пациентов по дате регистрации</h2>
+        <form id="filterForm">
+            <label for="startDate">Дата начала:</label>
+            <input type="date" id="startDate" name="startDate" required>
+            <label for="endDate">Дата окончания:</label>
+            <input type="date" id="endDate" name="endDate" required>
+            <button type="submit">Фильтровать</button>
+        </form>
+
+        <h2>Создание нового пациента</h2>
+        <form id="createPatientForm">
+            <label for="fullName">ФИО:</label>
+            <input type="text" id="fullName" name="fullName" required>
+            <label for="sex">Пол:</label>
+            <input type="text" id="sex" name="sex" required>
+            <label for="birthday">Дата рождения:</label>
+            <input type="date" id="birthday" name="birthday" required>
+            <label for="address">Адрес:</label>
+            <input type="text" id="address" name="address" required>
+            <label for="policyCMI">Полис ОМС:</label>
+            <input type="text" id="policyCMI" name="policyCMI">
+            <label for="snils">СНИЛС:</label>
+            <input type="text" id="snils" name="snils">
+            <label for="suitabilityCategory">Категория пригодности:</label>
+            <input type="text" id="suitabilityCategory" name="suitabilityCategory">
+            <label for="document">Документ:</label>
+            <input type="text" id="document" name="document">
+            <label for="militaryUnit">Воинская часть:</label>
+            <input type="text" id="militaryUnit" name="militaryUnit">
+            <label for="militaryRank">Воинское звание:</label>
+            <input type="text" id="militaryRank" name="militaryRank">
+            <label for="belonging">Принадлежность:</label>
+            <input type="text" id="belonging" name="belonging">
+            <label for="hostilities">Участвовал в боевых действиях:</label>
+            <input type="checkbox" id="hostilities" name="hostilities">
+            <label for="personalNumber">Личный номер:</label>
+            <input type="text" id="personalNumber" name="personalNumber">
+            <label for="militaryCommissariat">Военный комиссариат:</label>
+            <input type="text" id="militaryCommissariat" name="militaryCommissariat">
+            <label for="militaryDistrict">Военный округ:</label>
+            <input type="text" id="militaryDistrict" name="militaryDistrict">
+            <button type="submit">Создать пациента</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAllPatients();
+
+            document.getElementById('filterForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                filterPatientsByDate(startDate, endDate);
+            });
+
+            document.getElementById('createPatientForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                createPatient();
+            });
+        });
+
+        function loadAllPatients() {
+            fetch('/patients')
+                .then(response => response.json())
+                .then(data => {
+                    const patientsTable = document.getElementById('patientsTable').querySelector('tbody');
+                    patientsTable.innerHTML = '';
+                    data.forEach(patient => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${patient.id}</td>
+                            <td>${patient.full_name}</td>
+                            <td>${patient.sex}</td>
+                            <td>${patient.birthday}</td>
+                            <td>${patient.address}</td>
+                            <td>${patient.registration_date}</td>
+                        `;
+                        patientsTable.appendChild(row);
+                    });
+                });
+        }
+
+        function filterPatientsByDate(startDate, endDate) {
+            fetch(`/patients/by_date?start_date=${startDate}&end_date=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const patientsTable = document.getElementById('patientsTable').querySelector('tbody');
+                    patientsTable.innerHTML = '';
+                    data.forEach(patient => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${patient.id}</td>
+                            <td>${patient.full_name}</td>
+                            <td>${patient.sex}</td>
+                            <td>${patient.birthday}</td>
+                            <td>${patient.address}</td>
+                            <td>${patient.registration_date}</td>
+                        `;
+                        patientsTable.appendChild(row);
+                    });
+                });
+        }
+
+        function createPatient() {
+            const formData = new FormData(document.getElementById('createPatientForm'));
+            const patientData = {};
+            formData.forEach((value, key) => {
+                if (key === 'hostilities') {
+                    patientData[key] = document.getElementById('hostilities').checked;
+                } else {
+                    patientData[key] = value;
+                }
+            });
+
+            fetch('/patients', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(patientData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadAllPatients();
+                document.getElementById('createPatientForm').reset();
+            });
+        }
+    </script>
+    {% endblock %}
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поликлиника - Поиск пациентов</title>
+    <style>
+
+        /* Стиль для логотипа */
+        .logo {
+            max-width: 200px; /* Установите максимальную ширину */
+            height: auto; /* Высота автоматически подстраивается */
+            display: block; /* Убирает отступы */
+            margin: 0 auto; /* Выравнивание по центру */
+            padding: 10px 0; /* Добавляет отступ сверху и снизу */
+        }
+        .header {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.header h1 {
+    margin: 10px 0;
+}
+
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/mycss/clinic_table.css">
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+
+    {% block content %}
+    <img class="logo" src="/img/logo_first.png" alt="Логотип SRM">
+    <h1>Поликлиника - Поиск пациентов</h1>
+
+    <div class="instruction-button">
+        <button id="openModal">Как искать?</button>
+    </div>
+
+    <form action="/clinic" method="get">
+        <input type="text" name="search" placeholder="Введите ФИО или дату рождения" value="{{ request.query_params.get('search', '') }}">
+        <button type="submit">Поиск</button>
+        <button class="btn-create" onclick="location.href='/clinic/patient/create'">Создать пациента</button>
+    </form>
+
+    <div class="export-button">
+        <button onclick="exportToExcel()">Выгрузить в Excel</button>
+    </div>
+
+    <div class="patient-panel">
+        <p>Общее количество пациентов: {{ patients|length }}</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>ФИО</th>
+                    <th>Дата рождения</th>
+                    <th>Адрес</th>
+                    <th>Номер карты</th>
+                    <th>Детали</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if patients %}
+                    {% for patient in patients %}
+                    <tr onclick="showDetails('{{ patient.id }}')">
+                        <td>{{ patient.full_name }}</td>
+                        <td>{{ patient.birthday.strftime('%d.%m.%Y') if patient.birthday else '' }}</td>
+                        <td>{{ patient.address }}</td>
+                        <td>{{ patient.card_number }}</td>
+                        <td><a href="javascript:void(0);" onclick="showModal('{{ patient.id }}')">Просмотреть</a></td>
+                    </tr>
+                    <tr id="details-{{ patient.id }}" class="patient-details">
+                        <td colspan="5">
+                            <!-- Убедитесь, что вы не дублируете содержимое -->
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="5" class="no-results">
+                        Не нашли пациента? <a href="/clinic/patient/create">Создать</a>
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Модальное окно инструкции -->
+    <div id="instructionModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Инструкция по поиску</h2>
+            <p>Вы можете искать пациентов по их имени, фамилии или дате рождения. Примеры запросов:</p>
+            <ul>
+                <li><strong>А А В</strong> - найдет всех пациентов, чьи ФИО начинаются с указанных букв.</li>
+                <li><strong>06 07 80</strong> - найдет пациентов, родившихся 6 июля 1980 года.</li>
+                <li><strong>И А 12 10 2001</strong> - найдет всех пациентов, у которых ФИО начинается с букв "И А" и дата рождения 12 октября 2001 года.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Модальное окно деталей пациента -->
+    <div id="detailsModal" class="modal" style="padding-left: 0px;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modal-content-container"></div>
+        </div>
+    </div>
+
+    <script>
+        function addAppointment() {
+            const list = document.getElementById('appointments');
+            const newItem = document.createElement('li');
+            newItem.innerHTML = `
+                <span contenteditable="true">Введите дату и время</span> - 
+                <span contenteditable="true">Введите отчёт врача</span>
+                <button onclick="deleteAppointment(this)">Удалить</button>
+            `;
+            list.appendChild(newItem);
+        }
+
+        function deleteAppointment(element) {
+            element.parentNode.remove();
+        }
+
+        function addHospitalization() {
+            const list = document.getElementById('hospitalizations');
+            const newItem = document.createElement('li');
+            newItem.innerHTML = `
+                <span contenteditable="true">Введите дату</span> - 
+                <span contenteditable="true">Введите диагноз</span>
+                <button onclick="deleteHospitalization(this)">Удалить</button>
+            `;
+            list.appendChild(newItem);
+        }
+
+        function deleteHospitalization(element) {
+            element.parentNode.remove();
+        }
+
+        function addVVK() {
+            const list = document.getElementById('vvks');
+            const newItem = document.createElement('li');
+            newItem.innerHTML = `
+                <span contenteditable="true">Введите дату</span> - 
+                <span contenteditable="true">Введите заключение</span>
+                <button onclick="deleteVVK(this)">Удалить</button>
+            `;
+            list.appendChild(newItem);
+        }
+
+        function deleteVVK(element) {
+            element.parentNode.remove();
+        }
+
+        function showDetails(patientId) {
+            var detailsRow = document.getElementById('details-' + patientId);
+            if (detailsRow.style.display === 'none' || detailsRow.style.display === '') {
+                detailsRow.style.display = 'table-row';
+            } else {
+                detailsRow.style.display = 'none';
+            }
+        }
+
+        function showModal(patientId) {
+            fetch(`/clinic/patient/${patientId}/details`)
+                .then(response => response.text())
+                .then(data => {
+                    var modalContentContainer = document.getElementById('modal-content-container');
+                    if (modalContentContainer) {
+                        modalContentContainer.innerHTML = data;
+                        document.getElementById('detailsModal').style.display = 'block';
+                    } else {
+                        console.error('Modal content container not found');
+                    }
+                })
+                .catch(error => console.error('Error fetching patient details:', error));
+        }
+
+        var modal = document.getElementById("detailsModal");
+        var closeButtons = document.getElementsByClassName("close");
+
+        for (var i = 0; i < closeButtons.length; i++) {
+            closeButtons[i].onclick = function() {
+                modal.style.display = "none";
+            }
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        function exportToExcel() {
+            // Логика для экспорта данных в Excel
+        }
+
+        var instructionModal = document.getElementById("instructionModal");
+        var openModalButton = document.getElementById("openModal");
+
+        openModalButton.onclick = function() {
+            instructionModal.style.display = "block";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == instructionModal) {
+                instructionModal.style.display = "none";
+            }
+        }
+
+        function enableEditing() {
+            const fields = document.querySelectorAll('[contenteditable="false"]');
+            fields.forEach(field => field.contentEditable = "true");
+            document.getElementById('editButton').style.display = 'none';
+            document.getElementById('saveButton').style.display = 'inline-block';
+        }
+
+
+        async function saveChanges(patientId) {
+    const data = {
+        full_name: "John Doe",
+        birthday: "1980-01-01",
+        address: "123 Main St",
+        policy_CMI: "1234567890",
+        snils: "123-456-789 00",
+        document: "Passport",
+        military_unit: "Unit 101",
+        military_rank: "Private",
+        belonging: "Belonging Example",
+        hostilities: true,
+        personal_number: "456789",
+        military_commissariat: "Commissariat Example",
+        military_district: "District Example",
+        phone_number: "+1234567890",
+        card_number: "CARD123",
+        patient_info: "Patient info example",
+        medical_type: "Type example",
+        vkk_info: "VKK info example",
+        hospitalization_info: "Hospitalization info example",
+        appointments: [
+            {
+                id: 1,
+                patient_id: patientId,
+                doctor_id: 123,
+                datetime_q: "2024-08-10T14:30:00",
+                note: "Appointment note",
+                doctor_report: "Doctor report",
+                doctor_note: "Doctor note",
+                doctor_full_name: "Dr. John Doe"
+            }
+        ],
+        hospitalizations: [
+            {
+                patient_id: patientId,
+                date: "2024-08-01",
+                diagnosis: "Diagnosis example",
+                direction: "Direction example"
+            }
+        ],
+        vvks: [
+            {
+                patient_id: patientId,
+                vvk_date: "2024-07-15",
+                vvk_number: "VVK123",
+                conclusion: "Conclusion example"
+            }
+        ]
+    };
+
+    try {
+        const response = await fetch(`/clinic/patients/${patientId}/update`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (response.ok) {
+            console.log('Success:', result);
+        } else {
+            console.error('Error:', result);
+        }
+    } catch (error) {
+        console.error('Request failed:', error);
+    }
+}
+
+    </script>
+
+    {% endblock %}
+</body>
+
+</html>

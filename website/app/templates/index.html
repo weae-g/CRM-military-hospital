@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/img/logo_first.png" type="image/png">
+    <title>"354 ВГ" МО РФ</title>
+    <style>
+        .logo {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+    
+    {% block content %}
+
+    <div class="content">
+        <!-- Логотип SRM -->
+        <img class="logo" src="/img/logo_first.png" alt="Логотип SRM" style="max-width: 30%; height: auto; display: block; margin: 0 auto;">
+        <h1 id="status" style="text-align: center; margin-top: 20px; display: block;">В данный момент данная страница находится в разработке.</h1>
+    </div>
+
+    <script>
+        // Получаем элемент h1 по его id
+        var statusElement = document.getElementById("status");
+        var originalText = statusElement.innerHTML;
+
+        // Флаг, чтобы определить, какой текст сейчас отображается
+        var isOriginal = true;
+
+        // Функция для смены текста
+        function changeText() {
+            if (isOriginal) {
+                // Меняем точку на символ ":"
+                statusElement.innerHTML = originalText.replace(".", ":(");
+            } else {
+                // Возвращаем исходный текст
+                statusElement.innerHTML = originalText;
+            }
+            // Инвертируем флаг
+            isOriginal = !isOriginal;
+        }
+
+        // Запускаем функцию changeText каждые 3 секунды
+        setInterval(changeText, 1500);
+    </script>
+    {% endblock %}
+</body>
+</html>

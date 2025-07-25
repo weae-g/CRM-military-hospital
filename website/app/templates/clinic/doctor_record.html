@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clinic Appointments</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { width: 80%; margin: 0 auto; }
+        h1, h2 { text-align: center; }
+        form { margin-bottom: 20px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; }
+        table, th, td { border: 1px solid black; }
+        th, td { padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .search { text-align: center; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Clinic Appointments</h1>
+        <div class="search">
+            <label for="patientSearch">Find Patient:</label>
+            <input type="text" id="patientSearch" name="patientSearch">
+            <button onclick="searchPatient()">Search</button>
+        </div>
+        <form id="appointmentForm">
+            <label for="patient_id">Patient ID:</label>
+            <input type="number" id="patient_id" name="patient_id" required><br>
+            <label for="doctor_id">Doctor ID:</label>
+            <input type="number" id="doctor_id" name="doctor_id" required><br>
+            <label for="datetime">Datetime:</label>
+            <input type="time" id="datetime" name="datetime" required><br>
+            <label for="note">Note:</label>
+            <textarea id="note" name="note"></textarea><br>
+            <input type="submit" value="Submit">
+        </form>
+        <h2>Appointments List</h2>
+        <table id="appointmentsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Patient ID</th>
+                    <th>Doctor ID</th>
+                    <th>Datetime</th>
+                    <th>Note</th>
+                    <th>Doctor Report</th>
+                    <th>Doctor Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be added here dynamically -->
+            </tbody>
+        </table>
+    </div>
+    <script>
+        document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            fetch('/clinic_appointment/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Reload the appointments list
+                loadAppointments();
+            });
+        });
+
+        function loadAppointments() {
+            fetch('/clinic_appointment/')
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('appointmentsTable').querySelector('tbody');
+                    tbody.innerHTML = '';
+                    data.forEach(appointment => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${appointment.id}</td>
+                            <td>${appointment.patient_id}</td>
+                            <td>${appointment.doctor_id}</td>
+                            <td>${appointment.datetime}</td>
+                            <td>${appointment.note}</td>
+                            <td>${appointment.doctor_report}</td>
+                            <td>${appointment.doctor_note}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                });
+        }
+
+        function searchPatient() {
+            const query = document.getElementById('patientSearch').value;
+            fetch(`/clinic_data?search=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Display search results (Implement as needed)
+                });
+        }
+
+        // Load appointments on page load
+        document.addEventListener('DOMContentLoaded', loadAppointments);
+    </script>
+</body>
+</html>

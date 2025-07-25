@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Отчёт по ВВК</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            font-size: 16px;
+            margin-bottom: 10px;
+            display: block;
+        }
+        input[type="file"] {
+            border: 2px solid #ccc;
+            display: block;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 20px;
+            width: 98%;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-transform: uppercase;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        video {
+            width: 100%; 
+            max-width: 800px;
+            height: auto; 
+            margin: 0 auto 20px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    {% include "base.html" %}   
+    <h1>Загрузить несколько DOCX файлов</h1> 
+    <form action="/vvk/upload/" method="post" enctype="multipart/form-data">
+        <div>
+            <label for="file-upload">Выберите файлы DOCX:</label>
+            <input type="file" id="file-upload" name="files" multiple accept=".docx">
+        </div>
+        <div>
+            <button type="submit">Загрузить файлы</button>
+        </div>
+    </form>
+
+    <h1>Инструкция к применению</h1>
+    <video controls>
+        <source src="/img/instruction_vvk.mp4" type="video/mp4">
+        Ваш браузер не поддерживает видео тег.
+    </video>
+</body>
+</html>

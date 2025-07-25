@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="/css/jquery-ui.css">
+    
+    <link rel="icon" href="/img/logoV3.png" type="image/png">
+    <script src="/js/jquery-3.7.1.min.js"></script>
+    
+    <script src="/js/jquery-ui.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: calc(100% - 40px);
+            margin: 20px;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            table-layout: fixed;
+        }
+        th, td {
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            white-space: normal;
+            padding: 5px 10px;
+            font-size: 13px;
+            word-wrap: break-word;
+        }
+        th {
+            position: sticky;
+            top: 0;
+            background-color: #f2f2f2;
+            z-index: 1;
+        }
+
+        /* Кнопка для возврата наверх страницы */
+        #scrollToTopBtn {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            z-index: 99;
+            border: none;
+            outline: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            padding: 15px;
+            border-radius: 50%;
+            font-size: 18px;
+        }
+
+        #scrollToTopBtn:hover {
+            background-color: #0056b3;
+        }
+
+        tr:hover {
+            background-color: #f4f4f4;
+        }
+
+        .export-btn {
+            display: block;
+            width: auto;
+            padding: 10px 20px;
+            margin: 20px auto;
+            text-align: center;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        .export-btn:hover, .export-btn:focus {
+            background-color: #0056b3;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+            color: white;
+        }
+
+        .total-patients {
+            text-align: left;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+
+        .datepicker-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .datepicker-container input {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .export-btn-low {
+            display: block;
+            width: auto;
+            padding: 10px 20px;
+            margin: 20px auto;
+            text-align: center;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        .info-button {
+            height: auto;
+            width: 20px;
+            border-radius: 50%;
+            padding: 5px;
+        }
+
+        .hidden-column {
+            display: none;
+        }
+
+        .ellipsis {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .expanded {
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+        .expandable {
+            cursor: pointer;
+        }
+
+       
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+    
+    {% block content %}
+    <button id="scrollToTopBtn" title="Наверх">&#10148;</button>
+
+    <div class="datepicker-container">
+        <label for="datepicker" class="discharge-calendar-column">Выберите дату:</label>
+        <input type="text" id="datepicker" name="date" class="discharge-calendar-column" readonly>
+    </div>
+    <div class="total-patients">
+        <p>Общее количество пациентов: {{ passport_data|length }}</p>
+    </div>
+    <h1>{{ title }}</h1>
+    <div class="export-btn">
+        <a href="/pacients/export_data_to_excel">Архив пациентов, для загрузки в формате Excel</a>
+    </div>
+    {% if title.startswith("Планируется перевод") %}
+        <div class="export-btn-low">
+            <a href="/pacients/transfer_document?date={{ selected_date }}">Скачать документ с пациентами на перевод</a>
+        </div>
+    {% endif %}
+    {% if title == "Пациенты, находящиеся на госпитализации в Хирургическом отделении" %}
+        <div class="export-btn-low">
+            <a href="/pacients/surgery_department_active_wards">Пациенты, находящиеся на госпитализации в Хирургическом отделении</a>
+        </div>
+    {% endif %}
+    {% if title == "Пациенты, находящиеся на госпитализации в Неврологическом отделении" %}
+        <div class="export-btn-low">
+            <a href="/pacients/neurological_department_active_wards">Пациенты, находящиеся на госпитализации в Неврологическом отделении</a>
+        </div>
+    {% endif %}
+    {% if title == "Пациенты, находящиеся на госпитализации в Кожно-венерологическом отделении" %}
+        <div class="export-btn-low">
+            <a href="/pacients/dermatovenerological_department_active_wards">Пациенты, находящиеся на госпитализации в Кожно-венерологическом отделении</a>
+        </div>
+    {% endif %}
+    {% if title == "Пациенты, находящиеся на госпитализации в Инфекционном отделении" %}
+        <div class="export-btn-low">
+            <a href="/pacients/infectious_department_active_wards">Пациенты, находящиеся на госпитализации в Инфекционном отделении</a>
+        </div>
+    {% endif %}
+    {% if title == "Пациенты, находящиеся на госпитализации в Терапевтическом отделении" %}
+        <div class="export-btn-low">
+            <a href="/pacients/therapeutic_department_active_wards">Пациенты, находящиеся на госпитализации в Терапевтическом отделении</a>
+        </div>
+    {% endif %}
+    
+
+    <input type="text" id="searchInput" placeholder="Поиск по ФИО" style="padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; width: calc(100% - 20px); margin-bottom: 10px;">
+
+
+    <table>
+        <thead>
+            <tr>
+                <th>№ п/п</th>
+                <th>История</th>
+                <th>ФИО</th>
+                <th>Дата рожд.</th>
+                <th>Звание</th>
+                <th>В/часть</th>
+                <!--<th>Лич. номер</th>-->
+                <th>Основа сл.</th>
+                <th>Округ</th>
+                <th>Направление</th>
+                <!--<th>Адрес</th>
+                <th>Тел.</th>-->
+                <th class=".discharge-branch">Отделение</th>               
+                <th class="current-time" id="current-time">Госп. дата</th>               
+                <th class="according-to-expiration-date">На категорию годности</th>
+                <th class="referral-diagnosis">Направительный диагноз</th>
+                <th>Диагноз при поступлении</th>
+                <th class="final-diagnosis">Окончательный диагноз</th>
+                <th class="therapist">Лечящий врач</th>
+                <th class="discharge-date-column">Дата выписки</th>
+                <th>Заполненность</th>
+                <th></th>
+                
+            </tr>
+        </thead>
+        
+        <tbody>
+            {% for data, hospital_data, completeness_percentage, color, discharge_date in passport_data %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ data.history_number }}</td>
+                <td>{{ data.full_name }}</td>
+                <td>{{ data.birthday_date.strftime('%d.%m.%Y') if data.birthday_date else '' }}</td>
+                <td>{{ data.military_rank }}</td>
+                <td>{{ data.military_unit | default('', true) }}</td>
+                <td>{{ data.service_basis }}</td>
+                <td>{{ hospital_data.district | default('', true) }}</td>
+                <td>{{ data.directions }}</td>
+                <td class=".discharge-branch">{{ data.branch }}</td>
+                <td class="current-time">{{ data.current_time.strftime('%d.%m.%Y в %H:%M') }}</td>
+                <td class="according-to-expiration-date" data-text="{{ hospital_data.suitability_category | default('', true) }}">{{ hospital_data.suitability_category | default('', true)   }}</td>  
+                <td class="referral-diagnosis" data-text="{{ data.first_diagnosis | default('', true) }}">{{ data.first_diagnosis | default('', true) }}</td>
+                <td data-text="{{ hospital_data.diagnosis_upon_admission | default('', true) }}">{{ hospital_data.diagnosis_upon_admission | default('', true) }}</td>
+                <td class="final-diagnosis" data-text="{{ hospital_data.final_diagnosis | default('', true) }}">{{ hospital_data.final_diagnosis | default('', true) }}</td>
+                <td class="therapist">{{ hospital_data.therapist | default('', true) }}</td>
+                <td class="discharge-date-column">{{ discharge_date | default('', true) }}</td>     
+                <td>{{ completeness_percentage | round }}%</td>
+                <td>
+                    <a href="/pacients/passport_data/{{ data.id }}">
+                        <img src="/img/icons8-info-40.png" class="info-button" style="background-color: {{color}}" alt="Информация">
+                    </a>
+                </td>
+            </tr>
+           
+            {% endfor %}
+        </tbody>
+    </table>
+    <script src="/js/popper.min.js"></script>
+    <script src="/js/bootstrap4.51.min.js"></script>
+    <script src="/js/jquery-ui.min.js"></script>
+    <script>
+        // Кнопка для возврата наверх страницы
+
+        var scrollToTopBtn = document.getElementById("scrollToTopBtn");
+
+        // Показать кнопку при прокрутке вниз
+        window.onscroll = function() {
+            scrollFunction();
+        };
+
+        function scrollFunction() {
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                scrollToTopBtn.style.display = "block";
+            } else {
+                scrollToTopBtn.style.display = "none";
+            }
+        }
+
+        // Прокрутить страницу вверх при нажатии на кнопку
+        scrollToTopBtn.addEventListener("click", function() {
+            document.body.scrollTop = 0;
+            document.documentElement.scrollTop = 0;
+        });
+
+        $(document).ready(function() {
+            // Функция для фильтрации строк таблицы по введенному значению
+            $("#searchInput").on("keyup", function() {
+                var value = $(this).val().toLowerCase(); // Преобразуем введенный текст в нижний регистр
+                $("table tbody tr").each(function() {
+                    var found = false;
+                    $(this).find("td").each(function() {
+                        if ($(this).text().toLowerCase().indexOf(value) > -1) {
+                            found = true;
+                            return false; // Прерываем цикл, если найдено совпадение
+                        }
+                    });
+                    $(this).toggle(found); // Скрываем или показываем строки, соответствующие критериям поиска
+                });
+            });
+        });
+
+        $(function() {
+            $("#datepicker").datepicker({
+                dateFormat: "yy-mm-dd",
+                onSelect: function(dateText) {
+                    if (title.startsWith("Пациенты, выписанные")){
+                        window.location.href = `/pacients/discharged_on_date/?date=${dateText}`;
+                    }
+                    else if (title.startsWith("Планируется перевод")){
+                        window.location.href = `/pacients/passport_data_planned/?date=${dateText}`;
+                    }
+                    else {
+                        window.location.href = `/pacients/hospitalized_patients_data_on_date/?date=${dateText}`;
+                    }
+                }   
+            });
+
+            const selectedDate = "{{ selected_date }}";
+            if (selectedDate) {
+                $("#datepicker").datepicker("setDate", selectedDate);
+            }
+
+            const hideDischargeDate = {{ hide_discharge_date | tojson }};
+            if (hideDischargeDate) {
+                $(".discharge-date-column").addClass("hidden-column");
+            }
+            if (hideDischargeDate) {
+                $(".export-btn").addClass("hidden-column");
+            }
+            if (!hideDischargeDate) {
+                $(".discharge-calendar-column").addClass("hidden-column");
+            }
+
+        
+            const title = "{{ title }}";
+            if (title === "Выписанные пациенты Хирургического отделения" || title.startsWith("Выписанные пациенты")) {
+                $(".export-btn, .discharge-calendar-column, .discharge-branch, .according-to-expiration-date").addClass("hidden-column");
+            }
+            
+            if (title === "Пациенты, находящиеся на госпитализации"){
+                $(".final-diagnosis").addClass("hidden-column");
+            }
+            
+            if (title.startsWith("Пациенты, находящиеся") || title.startsWith("Архив") || title.startsWith("Пациенты, с диагнозом")){
+                $(" .discharge-calendar-column, .according-to-expiration-date").addClass("hidden-column");
+            }
+
+            if (title.startsWith("Пациенты, принятые")){
+                $(" .final-diagnosis").addClass("hidden-column");
+            }
+
+            if (title.startsWith("Пациенты, принятые")){
+                $(" .current-time").addClass("hidden-column");
+            }
+        });
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            let colspan = 18;
+
+            const title = "{{ title }}";
+            const hideDischargeDate = {{ hide_discharge_date | tojson }};
+
+            if (title == "Пациенты, находящиеся на госпитализации") {
+                colspan -= 1; // Скрыта .final-diagnosis
+            }
+
+            if (title.startsWith("Пациенты, выписанные")) {
+                colspan -= 4; // Скрыты .export-btn, .discharge-calendar-column, .discharge-branch, .according-to-expiration-date
+            }
+
+            if (title.startsWith("Пациенты, находящиеся") || title.startsWith("Архив")) {
+                colspan -= 2; // Скрыты .discharge-calendar-column, .according-to-expiration-date
+            }
+
+            if (title.startsWith("Пациенты, принятые")) {
+                colspan -= 2; // Скрыты .final-diagnosis, .current-time
+            }
+
+            if (hideDischargeDate) {
+                colspan -= 1; // Скрыта .discharge-date-column
+            }
+
+            // Установка значения colspan для строки с дополнительной информацией
+            document.querySelectorAll('.patient-summary td').forEach(function(td) {
+                td.setAttribute('colspan', colspan);
+            });
+
+
+        const maxLength = 150;
+        
+        document.querySelectorAll('td').forEach(td => {
+            const fullText = td.dataset.text;
+            if (fullText && fullText.length > maxLength) {
+                td.classList.add('ellipsis', 'expandable');
+                td.dataset.shortText = fullText.substring(0, maxLength) + '...';
+                td.innerText = td.dataset.shortText;
+            }
+        });
+
+       
+
+
+        document.querySelectorAll('td.expandable').forEach(td => {
+            td.addEventListener('click', function() {
+                if (this.classList.contains('expanded')) {
+                    this.classList.remove('expanded');
+                    this.innerText = this.dataset.shortText;
+                } else {
+                    this.classList.add('expanded');
+                    this.innerText = this.dataset.text;
+                }
+            });
+        });
+    });
+    </script>
+    {% endblock %}
+</body>
+
+
+
+
+</html>

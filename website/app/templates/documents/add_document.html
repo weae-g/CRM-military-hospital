@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% if document_id %}Изменить{% else %}Добавить{% endif %} документ</title>
+    <link rel="stylesheet" href="/css/mycss/document.css">
+</head>
+<body>
+    <h1>{% if document_id %}Изменить{% else %}Добавить{% endif %} документ</h1>
+    <form method="post" enctype="multipart/form-data" action="{% if document_id %}{{ url_for('save_document', document_id=document_id) }}{% else %}{{ url_for('save_document') }}{% endif %}">
+        <label for="title">Заголовок:</label>
+        <input type="text" id="title" name="title" value="{{ document.title if document_id else '' }}" required><br>
+
+        <label for="description">Описание:</label>
+        <textarea id="description" name="description">{{ document.description if document_id else '' }}</textarea><br>
+
+        <label for="file">Файл:</label>
+        <input type="file" id="file" name="file"><br>
+
+        {% if document_id %}
+            <input type="hidden" name="_method" value="PUT">
+        {% endif %}
+        
+        <input type="submit" value="Сохранить">
+    </form>
+    <a href="{{ url_for('document_list') }}">Назад к списку</a>
+</body>
+</html>

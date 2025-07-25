@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пациенты</title>
+    <link rel="icon" href="/img/logo_first.png" type="image/png">
+    
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 90%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+        .logo {
+            display: block;
+            margin: 20px auto;
+            max-width: 50%;
+            height: auto;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+        th, td {
+            padding: 6px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .modal-content{
+            padding-left: 0px !important;  
+        }
+        tr:hover {
+            background-color: #f4f4f4;
+        }
+        .download-button {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        .download-button:hover {
+            background-color: #45a049;
+        }
+        .modal-body {
+      
+                max-width: 800px; /* Установите нужную ширину */
+                width: 100%;
+
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        .modal-dialog {
+    max-width: 800px; /* Установите нужную ширину */
+    width: 100%;
+}
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+        #search {
+            margin-bottom: 10px;
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+        }
+         /* Добавим стили для всплывающего уведомления */
+         .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+
+        /* Улучшаем стили модального окна */
+        .modal-header {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .modal-title {
+            font-weight: bold;
+        }
+
+        .modal-body input,
+        .modal-body select,
+        .modal-body textarea {
+            margin-bottom: 15px;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+
+        /* Стили формы */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-control {
+            width: 100%;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="toastSuccess" class="toast" data-delay="3000">
+        <div class="toast-header">
+            <strong class="mr-auto">Успех</strong>
+            <button type="button" class="ml-2 mb-1 close" data-dismiss="toast">&times;</button>
+        </div>
+        <div class="toast-body">
+            Пациент успешно добавлен!
+        </div>
+    </div>
+
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+
+    {% block content %}
+    <div class="container">
+        <div class="export-btn">
+            <a href="/clinic/download_excel">Архив пациентов, для загрузки в формате Excel</a>
+        </div>
+        <p>Общее количество пациентов: {{ total_patients }}</p>  
+        <h1>Последний добавленный номер карты</h1>
+    
+        {% if last_card_number %}
+            <p>Последний номер карты: {{ last_card_number }}</p>
+        {% else %}
+            <p>Номер карты не найден.</p>
+        {% endif %}
+        <h1>Список пациентов</h1>
+        <p id="initialMessage">Для поиска амбулаторной карты воспользуйтесь поиском</p>
+        <p id="patientCountMessage" style="display: none;">Общее количество пациентов: <span id="totalPatients">0</span></p>
+
+        <input type="text" id="search" placeholder="Поиск по ФИО или номеру карты" class="form-control mb-3">
+        <div class="input-group mb-3">
+            <div class="input-group-append">
+                <button class="btn btn-outline-secondary" type="button" id="searchButton">Поиск</button>
+            </div>
+        </div>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addPatientModal">
+            <i class="fas fa-plus"></i> Добавить пациента
+        </button>
+         <!-- Модальное окно для добавления пациента -->
+         <div class="modal fade" id="addPatientModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Добавить пациента</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="clinicDataForm" method="post">
+                            <div class="container">
+                                <div class="row">
+                                    <!-- Первый столбец -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="editFullName">ФИО:</label>
+                                            <input type="text" id="editFullName" name="full_name" class="form-control" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editCardNumber">Номер карты:</label>
+                                            <input type="text" id="editCardNumber" name="card_number" class="form-control" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editBirthday">Дата рождения:</label>
+                                            <input type="date" id="editBirthday" name="birthday" class="form-control" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editAddress">Адрес:</label>
+                                            <input type="text" id="editAddress" name="address" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editBelonging">Принадлежность к воинской службы:</label>
+                                            <select type="text" list="ranks" id="editBelonging" name="belonging" class="form-control">
+                                                    <option value="Офицеры, прапорщики">Офицеры, прапорщики</option>
+                                                    <option value="Военнослужащий, призванный по мобилизации">Военнослужащий, призванный по мобилизации</option>
+                                                    <option value="Военнослужащий по контракту">Военнослужащий по контракту</option>
+                                                    <option value="Военнослужащий по призыву">Военнослужащий по призыву</option>
+                                                    <option value="Курсант 1 курса (призывник)">Курсант 1 курса (призывник)</option>
+                                                    <option value="Курсант 2-4 курса">Курсант 2-4 курса</option>
+                                                    <option value="Прочие (ЛНР и ДНР)">Прочие (ЛНР и ДНР)</option>
+                                                    <option value="Пенсионеры МО">Пенсионеры МО</option>
+                                                    <option value="ЧСВ запаса, кадров">ЧСВ запаса, кадров</option>
+                                                    <option value="Шторм V">Шторм V</option>
+                                                    <option value="Шторм Z">Шторм Z</option>
+                                                    <option value="Прочие">Прочие</option>
+                                                </select>
+                                   
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editMilitaryDistrict">Военный округ:</label>
+                                            <input type="text" id="editMilitaryDistrict" list="okrug" name="military_district" class="form-control">
+                                            <datalist id="okrug">
+                                                <option value="Центральный военный округ">Центральный военный округ</option>
+                                                <option value="Восточный военный округ">Восточный военный округ</option>
+                                                <option value="Южный военный округ">Южный военный округ</option>
+                                                <option value="Ленинградский военный округ">Ленинградский военный округ</option>
+                                                <option value="Московский военный округ">Московский военный округ</option>
+                                                <option value="Другое">Другое</option>
+                                            </datalist> 
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editMilitaryCommissariat">Кем призван (Военный Коммисариат):</label>
+                                            <input type="text" id="editMilitaryCommissariat" name="military_commissariat" class="form-control">
+                                        </div>
+                                     
+                                    </div>
+        
+                                    <!-- Второй столбец -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="editHostilities">Участие в боевых действиях:</label>
+                                            <input type="checkbox" id="editHostilities" name="hostilities">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editPersonalNumber">Линый номер военнослужащего:</label>
+                                            <input type="text" id="editPersonalNumber" name="personal_number" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editDocument">Документ (ВБ, паспорт):</label>
+                                            <input type="text" id="editDocument" name="document" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editPhoneNumber">Номер телефона:</label>
+                                            <input type="text" id="editPhoneNumber" name="phone_number" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editMilitaryUnit">Воинская часть:</label>
+                                            <input type="text" id="editMilitaryUnit" name="military_unit" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editMilitaryRank">Воинское звание:</label>
+                                            <input type="text" id="editMilitaryRank" name="military_rank" list="ranks" class="form-control" oninput="validateInput()">
+                                            <datalist id="ranks">
+                                                <option value="Рядовой">
+                                                <option value="Матрос">
+                                                <option value="Ефрейтор">
+                                                <option value="Старший матрос">
+                                                <option value="Младший сержант">
+                                                <option value="Старшина 2-й статьи">
+                                                <option value="Сержант">
+                                                <option value="Старшина 1-й статьи">
+                                                <option value="Старший сержант">
+                                                <option value="Главный старшина">
+                                                <option value="Старшина">
+                                                <option value="Главный корабельный старшина">
+                                                <option value="Прапорщик">
+                                                <option value="Мичман">
+                                                <option value="Старший прапорщик">
+                                                <option value="Старший мичман">
+                                                <option value="Младший лейтенант">
+                                                <option value="Лейтенант">
+                                                <option value="Старший лейтенант">
+                                                <option value="Капитан">
+                                                <option value="Капитан-лейтенант">
+                                                <option value="Майор">
+                                                <option value="Капитан III ранга">
+                                                <option value="Подполковник">
+                                                <option value="Капитан II ранга">
+                                                <option value="Полковник">
+                                                <option value="Капитан 1-го ранга">
+                                                <option value="Генерал-майор">
+                                                <option value="Контр-адмирал">
+                                                <option value="Генерал-лейтенант">
+                                                <option value="Вице-адмирал">
+                                                <option value="Генерал-полковник">
+                                                <option value="Адмирал">
+                                                <option value="Генерал армии">
+                                                <option value="Адмирал флота, маршал рода войск">
+                                                <option value="Главный маршал рода войск">
+                                                <option value="Маршал Советского Союза">
+                                                <option value="Адмирал Флота Советского Союза">
+                                                <option value="Действительный государственный советник таможенной службы">
+                                                <option value="Государственный советник таможенной службы 1 ранга">
+                                                <option value="Государственный советник таможенной службы II ранга">
+                                                <option value="Государственный советник таможенной службы III ранга">
+                                                <option value="Советник таможенной службы 1 ранга">
+                                                <option value="Советник таможенной службы II ранга">
+                                                <option value="Советник таможенной службы III ранга">
+                                                <option value="Инспектор таможенной службы 1 ранга">
+                                                <option value="Инспектор таможенной службы II ранга">
+                                                <option value="Инспектор таможенной службы III ранга">
+                                                <option value="Курсант">
+                                                <option value="Другое">
+                                            </datalist>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editDirected">Кем направлен:</label>
+                                            <input type="text" id="editDirected" name="directed" class="form-control" list="directed-options" required placeholder="Выберите или введите источник направления">
+                                            <datalist id="directed-options">
+                                                <option value="Нетоложное состояние"></option>
+                                                <option value="Воинская часть"></option>
+                                                <option value="Поликлиника"></option>
+                                                <option value="Другое медицинское учреждение"></option>
+                                                <option value="Военная комендатура"></option>
+                                                <option value="Самообращение"></option>
+                                                <option value="Другое"></option>
+                                            </datalist>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Добавить пациента</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+            <table id="clinicTable" class="table table-bordered table-striped" style="display: none;">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Первое обращение</th>
+                    <th>Номер карты</th>
+                    <th>ФИО</th>
+                    <th>Дата рождения</th>
+                    <th>Номер телефона</th>
+                    <th>Воинское звание</th>
+                    <th>Место службы</th>
+                    <th>Кем направлен</th>
+                    <th>Кем призван</th>
+                    <th>Действия</th>
+                    <!-- Добавьте другие заголовки столбцов -->
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Строки будут добавлены здесь динамически -->
+            </tbody>
+        </table>
+    </div>
+    <script src="/js/jquery-3.5.1.min.js"></script>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/bootstrapv1.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const today = new Date().toISOString().split('T')[0]; // Сегодняшняя дата в формате YYYY-MM-DD
+            const minBirthday = '1900-01-01'; // Минимальная дата рождения
+
+            // Устанавливаем атрибуты min и max для поля "Дата рождения"
+            document.getElementById('editBirthday').setAttribute('min', minBirthday);
+            document.getElementById('editBirthday').setAttribute('max', today);
+        });
+
+        function validateInput() {
+            var input = document.getElementById('editMilitaryRank');
+            var list = document.getElementById('ranks');
+            var options = list.querySelectorAll('option');
+            var inputValid = Array.from(options).some(option => option.value === input.value);
+            if (!inputValid) {
+                input.setCustomValidity('Выберите воинское звание из списка.');
+            } else {
+                input.setCustomValidity('');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('search');
+            const searchButton = document.getElementById('searchButton');
+            const initialMessage = document.getElementById('initialMessage');
+            const patientCountMessage = document.getElementById('patientCountMessage');
+            const clinicTable = document.getElementById('clinicTable');
+
+            function performSearch() {
+                const query = searchInput.value.trim();
+                if (query.length >= 3) {
+                    fetch(`/clinic/clinic_data?name=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => {
+              
+                            updateTable(data);
+                            initialMessage.style.display = 'none';
+                            patientCountMessage.style.display = 'block';
+                            clinicTable.style.display = 'table';
+                        })
+                        .catch(error => console.error('Error fetching patients:', error));
+                } else {
+                    alert("Введите хотя бы 3 символа для поиска.");
+                }
+            }
+
+            searchButton.addEventListener('click', performSearch);
+
+            searchInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    performSearch();
+                }
+            });
+        });
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Месяцы начинаются с 0
+        const year = date.getFullYear();
+        return `${day}.${month}.${year}`;
+    }    
+    function formatDateTime(dateString) {
+        const options = {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ru-RU', options).replace(',', '');
+    }
+
+    function updateTable(patients) {
+        const tableBody = document.querySelector('#clinicTable tbody');
+        tableBody.innerHTML = '';
+
+        patients.forEach(patient => {
+    const row = document.createElement('tr');
+    
+
+
+        // Логирование для проверки
+
+
+    row.innerHTML = `
+        <td>${patient.id != null ? patient.id : ''}</td>
+        <td>${patient.current_time != null ? formatDateTime(patient.current_time) : ''}</td>
+        <td>${patient.card_number != null ? patient.card_number : ''}</td>
+        <td>${patient.full_name != null ? patient.full_name : ''}</td>
+        <td>${patient.birthday != null ? formatDate(patient.birthday) : ''}</td>
+        <td>${patient.phone_number != null ? patient.phone_number : ''}</td>
+        <td>${patient.military_rank != null ? patient.military_rank : ''}</td>
+        <td>${patient.military_unit != null ? patient.military_unit : ''}</td>
+        <td>${patient.directed != null ? patient.directed : ''}</td>
+        <td>${patient.military_commissariat != null ? patient.military_commissariat : ''}</td>
+        <td>
+            <button class="btn btn-primary info-btn" data-id="${patient.id}">Информация</button>
+        </td>
+
+    `;
+    tableBody.appendChild(row);
+});
+
+
+        document.getElementById('totalPatients').textContent = `${patients.length} пациентов`;
+
+        document.querySelectorAll('.info-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const patientId = this.getAttribute('data-id');
+            window.location.href = `/clinic/patient/${patientId}`;
+        });
+    });
+    }
+    </script>
+    {% endblock %}
+</body>

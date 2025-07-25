@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="/css/jquery-ui.css">
+    <link rel="icon" href="/img/logoV3.png" type="image/png">
+    <script src="/js/jquery-3.7.1.min.js"></script>
+    <script src="/js/jquery-ui.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: calc(100% - 40px);
+            margin: 20px;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            table-layout: fixed;
+        }
+        th, td {
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            white-space: normal;
+            padding: 5px 10px;
+            font-size: 13px;
+            word-wrap: break-word;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f4f4f4;
+        }
+        .total-patients {
+            text-align: left;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .export-btn {
+            display: block;
+            width: auto;
+            padding: 10px 20px;
+            margin: 20px auto;
+            text-align: center;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        .export-btn:hover, .export-btn:focus {
+            background-color: #0056b3;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+            color: white;
+        }
+        .datepicker-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .datepicker-container input {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .info-button {
+            height: auto;
+            width: 20px;
+            border-radius: 50%;
+            padding: 5px;
+        }
+        .no-data {
+            background-color: #ffcccc;
+        }
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+    
+    {% block content %}
+
+    <div class="total-patients">
+        <p>Общее количество пациентов: {{ passport_data|length }}</p>
+    </div>
+    <h1>{{ title }}</h1>
+    <input type="text" id="searchInput" placeholder="Поиск по ФИО" style="padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; width: calc(100% - 20px); margin-bottom: 10px;">
+
+    <table>
+        <thead>
+            <tr>
+                <th>№ п/п</th>
+                <th>ФИО</th>
+                <th>Дата оформления справки о тяжести увечья</th>
+                <th>Номер сертификата о тяжести увечья</th>
+                <th>Дата госпитализации</th>
+
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data, hospital_data, severity_data in passport_data %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ data.full_name }}</td>
+                <td class="{% if not severity_data %}no-data{% endif %}">{{ severity_data.severity_date.strftime('%d.%m.%Y') if severity_data else 'Нет данных' }}</td>
+                <td class="{% if not severity_data or not severity_data.severity_number %}no-data{% endif %}">{{ severity_data.severity_number if severity_data and severity_data.severity_number else 'Нет данных' }}</td>
+                <td class="{% if not data.current_time %}no-data{% endif %}">{{ data.current_time.strftime('%d.%m.%Y') if data.current_time else '' }}</td>
+                <td>
+                    <a href="/pacients/passport_data/{{ data.id }}">
+                        <img src="/img/icons8-info-40.png" class="info-button" alt="Информация">
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <script src="/js/popper.min.js"></script>
+    <script src="/js/bootstrap4.51.min.js"></script>
+    <script src="/js/jquery-ui.min.js"></script>
+    <script>
+        // Инициализация datepicker
+        $(function() {
+            $("#datepicker").datepicker({
+                dateFormat: "yy-mm-dd",
+                onSelect: function(dateText) {
+                    window.location.href = "/severity_certificates/?selected_date=" + dateText;
+                }
+            });
+        });
+
+        // Фильтрация таблицы по ФИО
+        document.getElementById("searchInput").addEventListener("input", function() {
+            var filter = this.value.toLowerCase();
+            var rows = document.querySelectorAll("table tbody tr");
+            rows.forEach(function(row) {
+                var name = row.cells[1].textContent.toLowerCase();
+                if (name.includes(filter)) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        });
+    </script>
+    {% endblock %}
+</body>
+</html>

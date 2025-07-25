@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Военно-врачебная комиссия</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Добавьте свои стили здесь, если необходимо */
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/vvk.css">
+    {% endblock %}
+    
+    {% block content %}
+    <div class="container mt-5">
+        <h1 class="text-center">Военно-врачебная комиссия</h1>
+        
+        <!-- Кнопка для открытия модального окна добавления записи о ВВК -->
+        <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#addVVKModal">Добавить запись о ВВК</button>
+        
+        <!-- Форма для поиска по ФИО -->
+        <form id="searchForm" class="mb-3">
+            <div class="form-group">
+                <input type="text" class="form-control" id="searchInput" placeholder="Поиск по ФИО">
+            </div>
+            <button type="submit" class="btn btn-primary">Найти</button>
+        </form>
+        
+        <!-- Модальное окно для добавления записи о ВВК -->
+        <div class="modal fade" id="addVVKModal" tabindex="-1" role="dialog" aria-labelledby="addVVKModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addVVKModalLabel">Добавление записи о ВВК</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Форма для ввода данных о новой записи о ВВК -->
+                        <form id="vvkForm">
+                            <div class="form-group">
+                                <label for="vvkContent">ФИО пациента:</label>
+                                <input type="text" id="vvkContent" name="content" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="vvkNumber">Номер записи:</label>
+                                <input type="text" id="vvkNumber" name="number" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="vvkDate">Дата:</label>
+                                <input type="date" id="vvkDate" name="date" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">Добавить</button>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Таблица для отображения записей о ВВК -->
+        <table class="table table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>ФИО пациента</th>
+                    <th>Номер записи</th>
+                    <th>Дата</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody id="vvkTableBody">
+                <!-- Строки таблицы будут добавлены динамически -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Включаем необходимые скрипты -->
+    <script src="/js/jquery-3.5.1.slim.min.js"></script>
+    <script src="/js/popper.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/vvk.js"></script>
+    {% endblock %}
+</body>
+</html>

@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Статистика по отделениям</title>
+    <link rel="icon" href="/img/logo_first.png" type="image/png">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1200px; 
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            overflow-x: auto; 
+        }
+        .logo {
+            display: block;
+            margin: 20px auto;
+            max-width: 50%;
+            height: auto;
+        }
+        h1, h2, h3 {
+            text-align: center;
+            margin-top: 20px; 
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px; 
+            font-size: 12px; 
+        }
+        th, td {
+            padding: 6px; 
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f4f4f4;
+        }
+        .chart {
+            flex-basis: 50%; 
+            margin-left: 20px; 
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+        .content h1, .chart h1 {
+            margin-top: 0;
+        }
+        .download-button {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        .download-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+
+    {% block content %}
+
+
+
+
+    <div class="container">
+        <img class="logo" src="/img/logo_first.png" alt="Логотип SRM">
+        <h1>Добро пожаловать в систему управления ресурсами военного госпиталя (на 150 коек, г. Казань) «354 ВКГ» Минобороны России</h1>
+
+        <h1>Статистика по отделениям</h1>
+        <table>
+            <tr>
+                <th>Отделение</th>
+                <th>Развернуто коек</th>
+                <th>Состоит человек</th>
+                <th>Поступило</th>
+                <th>Выписано</th>
+                <th>Переведено в другое отделение</th>
+                <th>Из другого отделения</th>
+                <th>Переведено в другое МО</th>
+                <th>Состоит</th>
+                <th>Фактическое число</th>
+                <th>Процент загрузки</th>
+                <th>Свободных коек</th>
+            </tr>
+            {% for dept in departments %}
+            <tr>
+                <td>{{ dept.department }}</td>
+                <td>{{ dept.beds_deployed }}</td>
+                <td>{{ dept.active_patients }}</td>
+                <td>{{ dept.admitted }}</td>
+                <td>{{ dept.discharged }}</td>
+                <td>{{ dept.transferred_out }}</td>
+                <td>{{ dept.transferred_in }}</td>
+                <td>{{ dept.transferred_to_other_MO }}</td>
+                <td>{{ dept.current_patients }}</td>
+                <td>{{ dept.factual_number }}</td>
+                <td>{{ "%.2f" % dept.load_percentage }}%</td>
+                <td>{{ dept.free_beds }}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td><strong>ИТОГО</strong></td>
+                <td>{{ totals.beds_deployed }}</td>
+                <td>{{ totals.active_patients }}</td>
+                <td>{{ totals.admitted }}</td>
+                <td>{{ totals.discharged }}</td>
+                <td>{{ totals.transferred_out }}</td>
+                <td>{{ totals.transferred_in }}</td>
+                <td>{{ totals.transferred_to_other_MO }}</td>
+                <td>{{ totals.current_patients }}</td>
+                <td>{{ totals.factual_number }}</td>
+                <td>{{ "%.2f" % totals.load_percentage }}%</td>
+                <td>{{ totals.free_beds }}</td>
+            </tr>
+        </table>
+
+        <a href="/download_department_statistics" class="download-button">Скачать статистику (.docx)</a>
+
+        <div class="chart">
+            <h1>График приема на госпитализацию</h1>
+            <input type="month" id="monthPicker" value="{{ current_month }}">
+            <button id="updateChart">Обновить график</button>
+            <canvas id="myChart" width="800" height="400"></canvas>
+        </div>
+        
+        <!---->
+        <h1>Статистика по пациентам за месяц в год по отделениям</h1>
+        <table>
+            <tr>
+                <th>Отделение</th>
+                {% for month in monthly_department_data.labels %}
+                <th>{{ month }}</th>
+                {% endfor %}
+            </tr>
+            {% for dept in monthly_department_data.data %}
+            <tr>
+                <td>{{ dept.department }}</td>
+                {% for count in dept.counts %}
+                <td>{{ count }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+            <tr>
+                <td><strong>ИТОГО</strong></td>
+                {% for count in monthly_department_data.total_counts %}
+                <td>{{ count }}</td>
+                {% endfor %}
+            </tr>
+        </table>
+        
+        <h1>График пациентов за месяц в год по отделениям и всего</h1>
+        <div class="chart">
+            
+            <canvas id="monthlyDepartmentChart" width="800" height="400"></canvas>
+        </div>
+        <!---->
+
+       
+        <h1>График данных о пациентах за месяц</h1>
+       
+        <div class="chart">                    
+            <canvas id="branchCompletenessChart"></canvas>
+        </div>
+
+        <!---->
+           <!-- Таблица для оборота койки -->
+        <h1>Оборот койки</h1>
+        <table>
+            <tr>
+                <th>Год-Месяц</th>
+                <th>Оборот койки</th>
+            </tr>
+            {% for (year, month), turnover in metrics_data.data.bed_turnover.items() %}
+            <tr>
+                <td>{{ year }}-{{ metrics_data.labels[month - 1] }}</td>
+                <td>{{ turnover }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <!-- Таблица для коечной мощности -->
+        <h1>Коечная мощность (в процентах)</h1>
+        <table>
+            <tr>
+                <th>Год-Месяц</th>
+                <th>Коечная мощность (%)</th>
+            </tr>
+            {% for (year, month), utilization in metrics_data.data.bed_utilization.items() %}
+            <tr>
+                <td>{{ year }}-{{ metrics_data.labels[month - 1] }}</td>
+                <td>{{ utilization|round(2) }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <!-- Таблица для средней длительности пребывания -->
+        <h1>Средняя длительность пребывания (в днях)</h1>
+        <table>
+            <tr>
+                <th>Год-Месяц</th>
+                <th>Средняя длительность пребывания (дней)</th>
+            </tr>
+            {% for (year, month), avg_stay in metrics_data.data.average_length_of_stay.items() %}
+            <tr>
+                <td>{{ year }}-{{ metrics_data.labels[month - 1] }}</td>
+                <td>{{ avg_stay|round(2) }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <!---->
+        <h1>Статистика по воинским званиям за всё время</h1>
+        <table>
+            <tr>
+                <th>Воинское звание</th>
+                <th>Количество пациентов</th>
+            </tr>
+            {% for rank in military_ranks_data %}
+            <tr>
+                <td>{{ rank.military_rank }}</td>
+                <td>{{ rank.count }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+      
+        <!--<div class="chart">
+            <h1>Кем направлен</h1>
+            <canvas id="referredByChart"></canvas>
+        </div>-->
+
+       
+
+        <div>
+            <h1>Упоминания врачей</h1>
+            <canvas id="therapistChartContainer"></canvas>
+        </div>
+
+ 
+
+        <!--<div class="chart">
+            <h1>Статистика ICD за год</h1>
+            <canvas id="icdChart"></canvas>
+        </div>-->
+
+        <!--<div>
+            <h1>Военнослужащие, части</h1>
+            <canvas id="militaryUnitsChartContainer"></canvas>
+        </div>-->
+
+        
+
+    </div>
+
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/chart.js"></script> 
+    <script>
+        document.getElementById('updateChart').addEventListener('click', function() {
+            const selectedMonth = document.getElementById('monthPicker').value;
+            fetch(`/api/hospitalization_data?month=${selectedMonth}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Обновление данных графика
+                    myChart.data.labels = data.labels.map(date => {
+                        const parts = date.split('-');
+                        return `${parts[2]}.${parts[1]}.${parts[0]}`;
+                    });
+                    myChart.data.datasets[0].data = data.counts;
+                    myChart.data.datasets[1].data = data.counts_out;
+                    myChart.update();
+                });
+        });
+
+        const monthlyDepartmentData = {{ monthly_department_data | tojson }};
+
+        const ctxMonthlyDept = document.getElementById('monthlyDepartmentChart').getContext('2d');
+        const monthlyDepartmentChart = new Chart(ctxMonthlyDept, {
+            type: 'line',
+            data: {
+                labels: monthlyDepartmentData.labels,
+                datasets: monthlyDepartmentData.data.map(dept => ({
+                    label: dept.department,
+                    data: dept.counts,
+                    fill: false,
+                    borderColor: getRandomColor(),
+                    tension: 0.1
+                })).concat([{
+                    label: 'Всего',
+                    data: monthlyDepartmentData.total_counts,
+                    fill: false,
+                    borderColor: 'rgb(0, 0, 0)',
+                    tension: 0.1
+                }])
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Месяц'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Количество пациентов'
+                        }
+                    }
+                }
+            }
+        });
+
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        const branchCompletenessChartData = {{ branch_completeness_chart_data | tojson }};
+
+        
+        const ctx = document.getElementById('branchCompletenessChart').getContext('2d');
+        const branchCompletenessChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: branchCompletenessChartData.labels,
+                datasets: [{
+                    label: 'Заполненность данных в карточках пациентов',
+                    data: branchCompletenessChartData.completeness,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) { return value + '%' }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return tooltipItem.raw + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        const labels = {{ chart_data.labels | tojson }};
+    const counts = {{ chart_data.counts | tojson }};
+    const counts_out = {{ chart_data.counts_out | tojson }};
+    const formattedLabels = labels.map(date => {
+        const parts = date.split('-');
+        return `${parts[2]}.${parts[1]}.${parts[0]}`;
+    });
+
+    const ctx1 = document.getElementById('myChart').getContext('2d');
+    const myChart = new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: formattedLabels,
+            datasets: [
+                {
+                    label: 'Принятые на госпитализацию',
+                    data: counts,
+                    fill: false,
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                },
+                {
+                    label: 'Выписанные пациенты',
+                    data: counts_out,
+                    fill: false,
+                    borderColor: 'rgb(255, 99, 132)',
+                    tension: 0.1
+                }
+            ]
+        },
+        options: {
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Дата'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Количество'
+                    }
+                }
+            }
+        }
+    });
+        
+
+        /*var ctxReferredBy = document.getElementById('referredByChart').getContext('2d');
+        var referredByChart = new Chart(ctxReferredBy, {
+            type: 'bar',
+            data: {
+                labels: {{ referred_by_chart_data.labels|tojson }},
+                datasets: [{
+                    label: 'Количество направленных пациентов',
+                    data: {{ referred_by_chart_data.counts|tojson }},
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });*/
+        
+        
+
+        /*var ctxIcd = document.getElementById('icdChart').getContext('2d');
+        var icdChart = new Chart(ctxIcd, {
+            type: 'doughnut',
+            data: {
+                labels: {{ icd_labels | safe }},
+                datasets: [{
+                    label: 'Количество ICD',
+                    data: {{ icd_counts | safe }},
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });*/
+
+        // Получение данных из шаблона Python и преобразование в формат, понятный JavaScript
+        /*var militaryUnitsLabels = {{ military_units_labels | tojson }};
+        var militaryUnitsCounts = {{ military_units_counts | tojson }};
+
+        // Создание графика с использованием библиотеки Chart.js
+        var ctxUnit = document.getElementById('militaryUnitsChartContainer').getContext('2d');
+        var myChartUnit = new Chart(ctxUnit, {
+            type: 'doughnut',
+            data: {
+                labels: militaryUnitsLabels,
+                datasets: [{
+                    label: 'Госпитализации по воинским частям',
+                    data: militaryUnitsCounts,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)', // Цвет столбцов
+                    borderColor: 'rgba(54, 162, 235, 1)', // Цвет границ столбцов
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                }
+            }
+        });*/
+
+        var therapistLabels = {{ therapist_labels | tojson }};
+        var therapistCounts = {{ therapist_counts | tojson }};
+
+        // Создание графика с использованием библиотеки Chart.js
+        var ctxTherapist = document.getElementById('therapistChartContainer').getContext('2d');
+        var myChartTherapist = new Chart(ctxTherapist, {
+            type: 'line',
+            data: {
+                labels: therapistLabels,
+                datasets: [{
+                    label: 'Госпитализации по лечащим врачам',
+                    data: therapistCounts,
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)', // Цвет столбцов
+                    borderColor: 'rgba(255, 99, 132, 1)', // Цвет границ столбцов
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                }
+            }
+        });
+
+    </script>
+{% endblock %}
+</body>
+</html>

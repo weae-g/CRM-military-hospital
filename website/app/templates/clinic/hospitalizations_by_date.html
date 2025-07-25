@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Госпитализации по дате</title>
+    <link rel="stylesheet" href="/static/css/styles.css"> <!-- Подключаем стили -->
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9fafb;
+        }
+
+        .container {
+            max-width: 80%;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            color: #333;
+        }
+
+        form {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 1.2rem;
+            margin-right: 10px;
+            color: #555;
+        }
+
+        input[type="date"] {
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 1rem;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f4f4f4;
+            color: #333;
+            font-weight: 600;
+        }
+
+        tr {
+            transition: background-color 0.3s ease;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        td {
+            color: #555;
+        }
+
+        ul {
+            padding-left: 15px;
+            margin: 5px 0;
+        }
+
+        ul li {
+            text-align: left;
+        }
+
+        .empty-message {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #888;
+            margin-top: 20px;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Адаптивные стили */
+        @media (max-width: 768px) {
+            .container {
+                max-width: 95%;
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            button {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+
+            th, td {
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+    
+    {% block content %}
+    <h1>Госпитализации по дате</h1>
+
+    <!-- Форма для выбора даты -->
+    <form method="get" action="/clinic/hospitalizations/by-date">
+        <label for="date">Выберите дату:</label>
+        <input type="date" id="date" name="date" value="{{ selected_date }}">
+        <button type="submit">Показать госпитализации</button>
+    </form>
+    
+    {% if message %}
+        <!-- Сообщение о том, что госпитализаций нет -->
+        <p class="empty-message">{{ message }}</p>
+    {% else %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ФИО пациента</th>
+                <th>Дата рождения</th>
+                <th>Дата госпитализации</th>
+                <th>Диагноз</th>
+                <th>Информация</th> <!-- Добавляем столбец для кнопки -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for hospitalization in hospitalizations %}
+                <tr>
+                    <td>{{ hospitalization.patient.full_name }}</td>
+                    <td>{{ hospitalization.patient.birthday.strftime('%d.%m.%Y') if hospitalization.patient.birthday else 'Не указано' }}</td>
+                    <td>{{ hospitalization.date.strftime('%d.%m.%Y') }}</td>
+                    <td>{{ hospitalization.diagnosis }}</td>
+                    <td>
+                        <a href="/clinic/patient/{{ hospitalization.patient.id }}" class="btn btn-info">Подробнее</a>
+                    </td> <!-- Добавляем кнопку для открытия информации о пациенте -->
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    {% endblock %}
+</body>
+</html>

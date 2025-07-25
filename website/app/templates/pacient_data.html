@@ -1,0 +1,2009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/all.min.css" rel="stylesheet">
+    <title>Данные пациента</title>
+    <style>
+        .hidden { display: none; }
+        body { padding-top: 20px; }
+        .card-header { background-color: #007bff; color: white; }
+        .main-container {
+            display: flex;
+            justify-content: space-between;
+        }
+        .container {
+            display: flex;
+            flex-direction: row-reverse;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            align-items: stretch;
+            flex: 4;
+        }
+        .card {
+            flex: 1 1 23%;
+            margin: 10px;
+        }
+        .wide-card {
+            flex: 2 1 48%; /* Span two card spaces */
+        }
+        .wide-card-2 {
+            flex: 2 1 48%; /* Span two card spaces */
+        }
+        .wide-card-full {
+            flex: 4 1 100%; /* Span two card spaces */
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);   
+            background-color: rgba(0,0,0,0.4);
+            max-width: none;
+            left: 0;
+            right: 0;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: auto !important;
+            max-width: none !important;
+            left: 0 !important;
+            right: 0 !important;
+        }
+        .hospital-modal-content {
+            width: 100%;
+        }
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+            margin-left: 20px;
+            flex: 1;
+        }
+        .button-container button {
+            margin-bottom: 10px;
+            background-color: gray;
+            border-color: gray;
+            color: white;
+        }
+        .dropdown-menu {
+            padding: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+        .empty-field {
+            color: gray; /* Или другой цвет */
+            font-weight: bold;
+            text-decoration: underline;
+        }
+        .red-field {
+            background-color: pink; /* или любой другой стиль для обозначения "красной строки" */
+        }
+        #editInjuryModal {
+            z-index: 1051; /* Немного выше стандартного z-index для модальных окон Bootstrap */
+        }
+
+        #addInjuryModal {
+            z-index: 1050; /* Стандартный z-index для модальных окон Bootstrap */
+        }
+
+    </style>
+</head>
+<body>
+
+<a href="javascript:void(0)" class="btn btn-secondary" onclick="window.history.go(-1)">
+    &larr; Вернуться назад
+</a>
+    
+
+<div class="container"> 
+
+      
+      
+
+    <!-- Перемещения пациента -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            Заполняется старшей медицинской при выписке/переводе пациента
+            <button type="button" class="btn btn-primary" id="addMovementBtn">Добавить</button>
+        </div>
+        
+        {% for movement in movements %}
+            <div class="card-body" id="movementCard{{ movement.id }}">
+                <p>Перемещение №{{ loop.index | default('', true)}}</p>
+                <p>Отделение: <span class="{{ 'empty-field' if not movement.department else '' }}">{{ movement.department | default('', true)}}</span></p>
+                <p>Событие: <span class="{{ 'empty-field' if not movement.event_type else '' }}">{{ movement.event_type | default('', true)}}</span></p>
+                <p>Дата: <span class="{{ 'empty-field' if not movement.event_date else '' }}">{{ movement.event_date | format_datetime("%d.%m.%Y в %H:%M") }}</span></p>
+                <p>Перевод - куда(отделение): <span class="{{ 'empty-field' if not movement.destination_department else '' }}">{{ movement.destination_department | default('', true)}}</span></p>
+                <div class="row {{ 'empty-field' if movement.note else '' }}">
+                    <p>Примечание: {{ movement.note | default('', true)}}</p>   
+                </div>
+                <button type="button" class="btn btn-danger" onclick="deleteMovement({{ passport_data.id }}, {{ movement.id }})">Удалить</button>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Госпиталные данные -->
+    {% for record in hospital_records %}
+    <div class="card mt-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <!-- Запись диагноза и анамнеза --> Заполняется лечащим врачем
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#editDiagnosisRecordModal{{ loop.index }}">
+                Редактировать
+            </button>
+        </div>
+        <div class="card-body" id="cardBodyDiagnosis{{ loop.index }}">
+            <div class="row {{ 'empty-field' if not record.therapist else '' }}">
+                <p>Лечащий врач: {{ record.therapist | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not record.anamnesis else '' }}">
+                <p>Анамнез: {{ record.anamnesis | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not record.expert_diagnosis else '' }}">
+                <p>Экспертный диагноз: {{ record.expert_diagnosis | default('', true) }}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not record.final_diagnosis else '' }}">
+                <p>Окончательный диагноз: {{ record.final_diagnosis | default('', true) }}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not record.ICD else '' }}">
+                <p>Код МКБ-10: {{ record.ICD | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not record.vvk_decision else '' }}">
+                <p>Решение ВВК: {{ record.vvk_decision | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not record.severity_of_injury else '' }}">
+                <p>Тяжесть увечья:  
+                    {% if record.severity_of_injury == True %}
+                        Да
+                    {% elif record.severity_of_injury == False %}
+                        Нет
+                    {% else %}
+                        {{ record.severity_of_injury | default('', true) }}
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div> 
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <!-- Запись госпитализации --> Заполняется в отделении постовой сестрой
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#editHospitalRecordModal{{ loop.index }}">
+                Редактировать
+            </button>
+        </div>
+        <div class="card-body" id="cardBody{{ loop.index }}">
+            <div class="row {{ 'empty-field' if not record.diagnosis_upon_admission else '' }}">
+                <p>Первичный диагноз: {{ record.diagnosis_upon_admission | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not record.diagnosis_according_to_form_one_hundred else '' }}">
+                <p>Диагноз для справки о ранении (по справке 100): {{ record.diagnosis_according_to_form_one_hundred | default('', true)}}</p>
+            </div>
+            <br>
+            <p><strong>Служба в Вооруженных Силах Российской Федерации</strong></p>
+            <div class="row {{ 'empty-field' if not record.vk_urgent_call_date else '' }}">
+                <p>Военный комиссариат и дата призыва на службу (по контракту/мобилизации): {{ record.vk_urgent_call_date | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not record.vk_call_up_date else '' }}">
+                <p>Военный комиссариат и дата призыва на <strong>срочную службу</strong>: {{ record.vk_call_up_date | default('', true)}}</p>
+            </div>
+            <br>
+            <div class="row {{ 'empty-field' if not record.district else '' }}">
+                <p>Округ: {{ record.district | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not record.character_of_the_hospital else '' }}">
+                <p>Характер госпитализации: {{ record.character_of_the_hospital | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not record.reason_for_departure else '' }}">
+                <p>Исход выписки: {{ record.reason_for_departure | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not record.certificate_of_injury else '' }}">
+                <p>Наличие справки о ранении:  
+                    {% if record.certificate_of_injury == True %}
+                        Да
+                    {% elif record.certificate_of_injury == False %}
+                        Нет
+                    {% else %}
+                        {{ record.certificate_of_injury | default('', true) }}
+                    {% endif %}
+                </p>
+            </div>
+            <div class="row {{ 'empty-field' if not record.medical_record else '' }}">
+                <p>Наличие медицинской книжки:  
+                    {% if record.medical_record == True %}
+                        Да
+                    {% elif record.medical_record == False %}
+                        Нет
+                    {% else %}
+                        {{ record.medical_record | default('', true) }}
+                    {% endif %}
+                </p>
+            </div>
+            <div class="row {{ 'empty-field' if not record.food_certificate else '' }}">
+                <p>Наличие продовольственного аттестата:  
+                    {% if record.food_certificate == True %}
+                        Да
+                    {% elif record.food_certificate == False %}
+                        Нет
+                    {% else %}
+                        {{ record.food_certificate | default('', true) }}
+                    {% endif %}
+                </p>
+            </div>
+            <div class="row {{ 'empty-field' if not record.entered_after_participating_in_hostilities else '' }}">
+                <p>Поступил после участия в боевых действиях: 
+                    {% if record.entered_after_participating_in_hostilities == True %}
+                        Да
+                    {% elif record.entered_after_participating_in_hostilities == False %}
+                        Нет
+                    {% else %}
+                        {{ record.entered_after_participating_in_hostilities | default('', true) }}
+                    {% endif %}
+                </p>
+            </div>
+            <div class="row {{ 'empty-field' if not record.suitability_category else '' }}">
+                <p>Поступил для прохождение ВВК на категорию годности: 
+                    {% if record.suitability_category == True %}
+                        Да
+                    {% elif record.suitability_category == False %}
+                        Нет
+                    {% else %}
+                        {{ record.suitability_category | default('', true) }}
+                    {% endif %}
+                </p>
+            </div>
+            
+        </div>
+    </div>
+
+
+    <!-- Модальное окно для редактирования диагноза и анамнеза -->
+    <div class="modal fade" id="editDiagnosisRecordModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="editDiagnosisRecordModalLabel{{ loop.index }}" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editDiagnosisRecordModalLabel{{ loop.index }}">Редактировать диагноз и анамнез</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form action="/pacients/update_diagnosis_record/{{ record.id }}" method="post">            
+                        <div class="modal-body">
+                            <div class="form-group" style="visibility: hidden; display: none;">
+                                <label for="patient_id"></label>
+                                <input type="text" id="patient_id" name="patient_id" value="{{ passport_data.id }}" class="form-control mb-2" style="visibility: hidden;">
+                            </div>
+                            <div class="form-group mt-2">
+                                <label for="therapist">Лечащий врач:</label>
+                                <input id="therapist" name="therapist" list="therapists" class="form-control mb-2" value="{{ record.therapist | default('', true) }}"/>
+                                <datalist id="therapists">
+                                    {% for therapist in therapists %}
+                                        <option value="{{ therapist }}">{{ therapist }}</option>
+                                    {% endfor %}
+                                </datalist>
+                            </div>                               
+                            <div class="form-group mt-2">
+                                <label for="anamnesis">Анамнез:</label>
+                                <textarea id="anamnesis" name="anamnesis" class="form-control mb-2">{{ record.anamnesis | default('', true)}}</textarea>
+                            </div>   
+                            <div class="form-group mt-2">
+                                <label for="expert_diagnosis">Экспертный диагноз:</label>
+                                <textarea type="text" id="expert_diagnosis" name="expert_diagnosis" class="form-control mb-2">{{record.expert_diagnosis | default('', true)}}</textarea>
+                            </div>                  
+                            <div class="form-group mt-2">
+                                <label for="final_diagnosis">Окончательный диагноз:</label>
+                                <textarea type="text" id="final_diagnosis" name="final_diagnosis" class="form-control mb-2">{{record.final_diagnosis | default('', true)}}</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="ICD">Код МКБ-10:</label>
+                                <input type="text" id="ICD" name="ICD" value="{{ record.ICD | default('', true)}}" class="form-control mb-2">
+                            </div>
+                            <div class="form-group">
+                                <label for="vvk_decision">Решение ВВК:</label>
+                                <input type="text" id="vvk_decision" name="vvk_decision" value="{{ record.vvk_decision | default('', true)}}" class="form-control mb-2">
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" id="severity_of_injury" name="severity_of_injury" {% if record.severity_of_injury %} checked {% endif %} class="form-check-input">
+                                <label class="form-check-label" for="severity_of_injury">Тяжесть увечья</label>
+                            </div>                          
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для редактирования госпитализации -->
+    <div class="modal fade" id="editHospitalRecordModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="editHospitalRecordModalLabel{{ loop.index }}" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editHospitalRecordModalLabel{{ loop.index }}">Редактировать данные о госпитализации</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form action="/pacients/update_hospital_record/{{ record.id }}" method="post">            
+                    <div class="modal-body">
+                        <div class="form-group" style="visibility: hidden; display: none;">
+                            <label for="patient_id"></label>
+                            <input type="text" id="patient_id" name="patient_id" value="{{ passport_data.id }}" class="form-control mb-2" style="visibility: hidden;">
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="diagnosis_upon_admission">Первичный диагноз:</label>
+                            <textarea type="text" id="diagnosis_upon_admission" name="diagnosis_upon_admission" class="form-control mb-2">{{record.diagnosis_upon_admission | default('', true)}}</textarea>
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="diagnosis_according_to_form_one_hundred">Диагноз по справке 100:</label>
+                            <textarea type="text" id="diagnosis_according_to_form_one_hundred" name="diagnosis_according_to_form_one_hundred" class="form-control mb-2">{{record.diagnosis_according_to_form_one_hundred | default('', true)}}</textarea>
+                        </div>                        
+                        <div class="form-group">
+                            <label for="vk_urgent_call_date">Военный комиссариат и дата призыва на службу (по контракту/мобилизации):</label>
+                            <textarea type="text" id="vk_urgent_call_date" name="vk_urgent_call_date" class="form-control mb-2" placeholder="Пример: с 23.12.1996 по 15.11.1998 г. Призывная комиссия ВК Старокулатинского района, Ульяновской области">{{ record.vk_urgent_call_date | default('', true)}}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="vk_call_up_date">Военный комиссариат и дата призыва на <strong>срочную службу</strong>:</label>
+                            <textarea type="text" id="vk_call_up_date" name="vk_call_up_date"  class="form-control mb-2" placeholder="Пример: с 23.12.1996 Призывная комиссия ВК Старокулатинского района, Ульяновской области. С командиром воинской части 00910 по 23.12.2023">{{ record.vk_call_up_date | default('', true)}}</textarea>
+                        </div>                        
+                        <div class="form-group">
+                            <label for="district">Округ:</label>
+                            <input type="text" id="district" name="district" list="okrug" value="{{ record.district| default('', true) }}" class="form-control mb-2">    
+                            <datalist id="okrug">
+                                <option value="Центральный военный округ"></option>
+                                <option value="Восточный военный округ"></option>
+                                <option value="Южный военный округ"></option>
+                                <option value="Ленинградский военный округ"></option>
+                                <option value="Московский военный округ"></option>
+                                <option value="Другое"></option>
+                            </datalist>                   
+                        </div>
+                        <div class="form-group">
+                            <label for="character_of_the_hospital">Характер госпитализации:</label>
+                            <input type="text" id="character_of_the_hospital" name="character_of_the_hospital" value="{{ record.character_of_the_hospital | default('', true)}}" list="characte" class="form-control mb-2">
+                            <datalist id="characte">
+                                <option value="Санитарно эвакуационном поездом"></option>
+                                <option value="Неотложный"></option>
+                                <option value="Плановый"></option>
+                                <option value="Самообращение"></option>
+                            </datalist> 
+                        </div>
+                        <div class="form-group">
+                            <label for="reason_for_departure">Исход выписки:</label>
+                            <input type="text" id="reason_for_departure" name="reason_for_departure" list="reason" value="{{ record.reason_for_departure | default('', true)}}" class="form-control mb-2">
+                            <datalist id="reason">
+                                <option value="За нарушение режима в часть"></option>
+                                <option value="В часть"></option>
+                                <option value="В другое МО"></option>
+                                <option value="Другое"></option>
+                            </datalist> 
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" id="certificate_of_injury" name="certificate_of_injury" {% if record.certificate_of_injury %} checked {% endif %} class="form-check-input">
+                            <label class="form-check-label" for="certificate_of_injury">Наличие справки о ранении</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" id="medical_record" name="medical_record" {% if record.medical_record %} checked {% endif %} class="form-check-input">
+                            <label class="form-check-label" for="medical_record">Наличие медицинской книжки</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" id="food_certificate" name="food_certificate" {% if record.food_certificate %} checked {% endif %} class="form-check-input">
+                            <label class="form-check-label" for="food_certificate">Наличие продовольственного аттестата (выписка из приказа)</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" id="entered_after_participating_in_hostilities" name="entered_after_participating_in_hostilities" {% if record.entered_after_participating_in_hostilities %} checked {% endif %} class="form-check-input">
+                            <label class="form-check-label" for="entered_after_participating_in_hostilities">Поступил после участия в боевых действиях</label>
+                        </div>                        
+                        <div class="form-check">
+                            <input type="checkbox" id="suitability_category" name="suitability_category" {% if record.suitability_category %} checked {% endif %} class="form-check-input">
+                            <label class="form-check-label" for="suitability_category">Поступил для прохождение ВВК на категорию годности</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <!-- Паспортные данные -->Заполняется при поступлении в приемном отделении
+            <button type="button" class="btn btn-primary" id="openEditModal">
+                Редактировать данные
+            </button>
+        </div>
+        <div class="card-body" id="passportData">
+            <div class="row {{ 'empty-field' if not passport_data.full_name else '' }}">
+                <p><b>ФИО: {{ passport_data.full_name | default('', true)}}</b></p>
+            </div>
+            <div class="row {{ 'empty-field' if not passport_data.id else '' }}">
+                <p>Идентификатор: {{ passport_data.id | default('', true) }}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not passport_data.history_number else '' }}">
+                <p>Номер истории: {{ passport_data.history_number | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not passport_data.birthday_date else '' }}">
+                <p>Дата рождения: {{ passport_data.birthday_date | format_datetime("%d.%m.%Y") | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not passport_data.military_rank else '' }}">
+                <p>Звание: {{ passport_data.military_rank | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not passport_data.military_unit else '' }}">
+                <p>Воинская часть: {{ passport_data.military_unit | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not passport_data.service_basis else '' }}">
+                <p>Контингент: {{ passport_data.service_basis | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not passport_data.branch else '' }}">
+                <p>Отделение: {{ passport_data.branch | default('', true) }}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not passport_data.current_time else '' }}">
+                <p>Дата госпитализации: {{ passport_data.current_time | format_datetime("%d.%m.%Y в %H:%M") | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not passport_data.date_of_illness else '' }}">
+                <p>Дата получения ранения/заболевания: {{ passport_data.date_of_illness | format_datetime("%d.%m.%Y") | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not passport_data.phone_number else '' }}">
+                <p>Номер телефона: {{ passport_data.phone_number | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not passport_data.personal_data else '' }}">
+                <p>Личный номер: {{ passport_data.personal_data | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not passport_data.personal_document else '' }}">
+                <p>Номер военного билета: {{ passport_data.personal_document | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not passport_data.address else '' }}">
+                <p>Адрес: {{ passport_data.address | default('', true) }}</p>
+            </div>
+            <div class="row {% if passport_data.directions == 'Военная комендатура' %}red-field{% endif %}">
+                <p>Кем направлен: {{ passport_data.directions | default('', true) }}</p>
+            </div>
+            
+            <div class="row {{ 'empty-field' if not passport_data.first_diagnosis else '' }}">
+                <p>Диагноз при поступлении: {{ passport_data.first_diagnosis | default('', true)}}</p>
+            </div>
+            <div class="row {{ 'empty-field' if not passport_data.after_hostilities else '' }}">
+                <p>Поступил после СВО, боевых действий:  
+                    {% if passport_data.after_hostilities == True %}
+                        Да
+                    {% elif passport_data.after_hostilities == False %}
+                        Нет
+                    {% else %}
+                        {{ passport_data.after_hostilities | default('', true) }}
+                    {% endif %}
+                </p>
+            </div>
+            <div class="row {{ 'empty-field' if not passport_data.unit_commander else '' }}">
+                <p>Должность. Номер для связи с местом службы: {{ passport_data.unit_commander | default('', true)}}</p>
+            </div>
+        </div>       
+    </div>
+   
+    
+
+    <!-- Модальное окно редактирования паспортных данных -->
+    <div id="editPassportModal" class="modal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editPassportModalLabel">Редактирование данных пациента</h5>
+                    <button type="button" class="close" id="closeEditModal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form action="/pacients/update_passport_data/{{ passport_data.id }}" method="post">            
+                    <div class="modal-body">                       
+                        <div class="form-group">
+                            <label for="full_name">ФИО:</label>
+                            <input type="text" id="full_name" name="full_name" value="{{ passport_data.full_name }}" class="form-control mb-2">
+                        </div>
+                        <div class="form-group">
+                            <label for="birthday_date">Дата рождения:</label>
+                            <input type="date" id="birthday_date" name="birthday_date" value="{{ passport_data.birthday_date }}" class="form-control mb-2" min="1900-01-01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="military_rank">Воинское звание:</label>
+                            <input type="text" id="military_rank" name="military_rank" list="ranks" oninput="validateInput()" class="form-control mb-2" value="{{ passport_data.military_rank }}">
+                            <datalist id="ranks">
+                                <option value="Рядовой">
+                                <option value="Матрос">
+                                <option value="Ефрейтор">
+                                <option value="Старший матрос">
+                                <option value="Младший сержант">
+                                <option value="Старшина 2-й статьи">
+                                <option value="Сержант">
+                                <option value="Старшина 1-й статьи">
+                                <option value="Старший сержант">
+                                <option value="Главный старшина">
+                                <option value="Старшина">
+                                <option value="Главный корабельный старшина">
+                                <option value="Прапорщик">
+                                <option value="Мичман">
+                                <option value="Старший прапорщик">
+                                <option value="Старший мичман">
+                                <option value="Младший лейтенант">
+                                <option value="Лейтенант">
+                                <option value="Старший лейтенант">
+                                <option value="Капитан">
+                                <option value="Капитан-лейтенант">
+                                <option value="Майор">
+                                <option value="Капитан III ранга">
+                                <option value="Подполковник">
+                                <option value="Капитан II ранга">
+                                <option value="Полковник">
+                                <option value="Капитан 1-го ранга">
+                                <option value="Генерал-майор">
+                                <option value="Контр-адмирал">
+                                <option value="Генерал-лейтенант">
+                                <option value="Вице-адмирал">
+                                <option value="Генерал-полковник">
+                                <option value="Адмирал">
+                                <option value="Генерал армии">
+                                <option value="Адмирал флота, маршал рода войск">
+                                <option value="Главный маршал рода войск">
+                                <option value="Маршал Советского Союза">
+                                <option value="Адмирал Флота Советского Союза">
+                                <option value="Действительный государственный советник таможенной службы">
+                                <option value="Государственный советник таможенной службы 1 ранга">
+                                <option value="Государственный советник таможенной службы II ранга">
+                                <option value="Государственный советник таможенной службы III ранга">
+                                <option value="Советник таможенной службы 1 ранга">
+                                <option value="Советник таможенной службы II ранга">
+                                <option value="Советник таможенной службы III ранга">
+                                <option value="Инспектор таможенной службы 1 ранга">
+                                <option value="Инспектор таможенной службы II ранга">
+                                <option value="Инспектор таможенной службы III ранга">
+                                <option value="Курсант">
+                                <option value="Другое">
+                            </datalist>                
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="military_unit">Воинская часть:</label>
+                            <input type="text" id="military_unit" name="military_unit" value="{{ passport_data.military_unit }}" class="form-control mb-2">
+                        </div>
+                        <div class="form-group">
+                            <label for="service_basis">Основание службы:</label>
+                            <input type="text" id="service_basis" name="service_basis" value="{{ passport_data.service_basis }}" class="form-control mb-2">
+                        </div>
+                        <div class="form-group">
+                            <label for="directions">Кем направлен:</label>
+                            <input type="text" id="directions" name="directions" value="{{ passport_data.directions }}" class="form-control mb-2">
+                        </div>
+                        <div class="form-group">
+                            <label for="branch">Отделение:</label>
+                            <input type="text" id="branch" name="branch" value="{{ passport_data.branch }}" class="form-control mb-2">
+                        </div>
+                        <div class="form-group">
+                            <label for="history_number">Номер истории:</label>
+                            <input type="text" id="history_number" name="history_number" value="{{ passport_data.history_number }}" class="form-control mb-2">
+                        </div>
+                        <div class="form-group">
+                            <label for="address">Адрес:</label>
+                            <input type="text" id="address" name="address" value="{{ passport_data.address }}" class="form-control mb-2">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone_number">Номер телефона:</label>
+                            <input type="text" id="phone_number" name="phone_number" value="{{ passport_data.phone_number }}" class="form-control mb-2">
+                        </div>
+                        <div class="form-group">
+                            <label for="personal_data">Личный номер:</label>
+                            <input type="text" id="personal_data" name="personal_data" value="{{ passport_data.personal_data }}" class="form-control mb-2">
+                        </div>
+                        <div class="form-group">
+                            <label for="personal_document">Номер военного билета:</label>
+                            <input type="text" id="personal_document" name="personal_document" value="{{ passport_data.personal_document }}" class="form-control mb-2">
+                        </div>
+                        <div class="form-group">
+                            <label for="date_of_illness">Дата получения ранения/заболевания:</label>
+                            <input type="date" id="date_of_illness" name="date_of_illness" value="{{ passport_data.date_of_illness }}" class="form-control mb-2" min="1900-01-01">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="first_diagnosis">Диагноз при поступлении:</label>
+                            <input type="text" id="first_diagnosis" name="first_diagnosis" value="{{ passport_data.first_diagnosis }}" class="form-control mb-2">
+                        </div>
+                        <div class="form-group">
+                            <input type="checkbox" id="after_hostilities" name="after_hostilities" {% if passport_data.after_hostilities %} checked {% endif %} class="form-check-input">
+                            <label class="form-check-label" for="after_hostilities">Поступил после СВО, боевых действий</label>
+                        </div>     
+                        <div class="form-group">
+                            <label for="unit_commander">Номер для связи с местом службы:</label>
+                            <input type="text" id="unit_commander" name="unit_commander" value="{{ passport_data.unit_commander }}" class="form-control mb-2">
+                        </div>                                    
+                        
+                        
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="cancelEditModal">Закрыть</button>
+                        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!---->
+    
+    <!-- Модальное окно для добавления перемещения -->
+    <div class="modal fade" id="addMovementModal" tabindex="-1" role="dialog" aria-labelledby="addMovementModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form action="/pacients/create_patient_movement" method="post">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addMovementModalLabel">Добавить перемещение</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="department">Отделение:</label>
+                            <select class="form-control" id="department" name="department" required>
+                                <option value="Кожно-венерологическое отделение" {% if passport_data.branch == "Кожно-венерологическое отделение" %}selected{% endif %}>Кожно-венерологическое отделение</option>
+                                <option value="Терапевтическое отделение" {% if passport_data.branch == "Терапевтическое отделение" %}selected{% endif %}>Терапевтическое отделение</option>
+                                <option value="Хирургическое отделение" {% if passport_data.branch == "Хирургическое отделение" %}selected{% endif %}>Хирургическое отделение</option>
+                                <option value="Неврологическое отделение" {% if passport_data.branch == "Неврологическое отделение" %}selected{% endif %}>Неврологическое отделение</option>
+                                <option value="Инфекционное отделение" {% if passport_data.branch == "Инфекционное отделение" %}selected{% endif %}>Инфекционное отделение</option>
+                            </select>
+                        </div>                        
+                        <div class="form-group">
+                            <label for="event_type">Тип события:</label>
+                            <select class="form-control" id="event_type" name="event_type" required>
+                                <option value="Прием на госпитализацию">Прием на госпитализацию</option>
+                                <option value="Выписан">Выписан</option>
+                                <option value="Выписан за нарушение режима">Выписан за нарушение режима</option>
+                                <option value="Перевод в другое отделение">Перевод в другое отделение</option>
+                                <option value="Перевод в другое ВМО">Перевод в другое ВМО</option>
+                                <option value="Перевод в другое МО">Перевод в другое МО</option>
+                                <option value="Перевод в РКБ">Перевод в РКБ </option>
+                                <option value="Направлен в санаторий">Направлен в санаторий</option>
+                                <option value="Планируется перевод">Планируется перевод</option>
+                                <option value="СОЧ">СОЧ</option>
+                                <option value="Летальный исход">Летальный исход</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="event_date">Дата события:</label>
+                            <input type="datetime-local" id="event_date" name="event_date" class="form-control" required>
+                        </div>
+                        
+                     
+                        <div class="form-group hidden" id="destination-department-group">
+                            <label for="destination_department">Направление в отделение:</label>
+                            <select class="form-control" id="destination_department" name="destination_department">
+                                <option value="">Выберите или оставьте пустым</option>
+                                <option value="Кожно-венерологическое отделение">Кожно-венерологическое отделение</option>
+                                <option value="Терапевтическое отделение">Терапевтическое отделение</option>
+                                <option value="Хирургическое отделение">Хирургическое отделение</option>
+                                <option value="Неврологическое отделение">Неврологическое отделение</option>
+                                <option value="Инфекционное отделение">Инфекционное отделение</option>
+                            </select>
+                        </div>    
+                        <div class="form-group">
+                            <label>Примечание:</label>
+                            <input type="text" class="form-control" name="note">
+                        </div>                    
+                        <input type="hidden" name="patient_id" value="{{ passport_data.id }}"> 
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary closeModal">Закрыть</button>
+                        <button type="submit" class="btn btn-primary">Добавить</button>
+                    </div>
+                
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ВВК Карточка  -->
+    <div class="card wide-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        Заключения ВВК
+        <div>
+            <button type="button" class="btn btn-primary" id="addVVKModalBtn">Добавить ВВК</button>
+
+        </div>
+    </div>
+    <div class="card-body">
+        {% if vvk_records %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col">№ ВВК</th>
+                        <th scope="col">Дата</th>
+                        <th scope="col">Решение ВВК</th>
+                        <th scope="col">Дата утверждения ВВК</th>
+                        <th scope="col">Дата отправки ВВК</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in vvk_records %}
+                    <tr id="vvkCard{{record.id}}">
+                        <th scope="row">{{ loop.index }}</th>
+                        <td>{{ record.vvk_number | default('', true) }}</td>
+                        <td>{{ record.vvk_date | format_datetime("%d.%m.%Y") }}</td>
+                        <td>{{ record.conclusion | default('', true) }}</td>
+                        <td>{{ record.date_of_dispatch | format_datetime("%d.%m.%Y")  }}</td>
+                        <td>{{ record.date_of_approval | format_datetime("%d.%m.%Y")  }}</td>
+                        <td><button type="button" class="btn btn-danger" onclick="deletePatientVvk({{passport_data.id}}, {{record.id}})">Удалить</button></td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Нет записей ВВК.</p>
+        {% endif %}
+    </div>
+    </div>
+
+    <!-- Модальное окно для добавление записях о ВВК  -->
+    <div class="modal fade" id="addVVKModal" tabindex="-1" role="dialog" aria-labelledby="addVVKModal" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form id="addVVKForm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addVVKModalLabel">Добавить перемещение</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Дата проведения ВВК:</label>
+                        <input type="date" class="form-control" name="vvk_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Номер заключения:</label>
+                        <input type="text" class="form-control" name="vvk_number" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Решение ВВК:</label>
+                        <input type="text" class="form-control" name="conclusion" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Дата утверждения ВВК:</label>
+                        <input type="date" class="form-control" name="date_of_dispatch">
+                    </div>
+                    <div class="form-group">
+                        <label>Дата отправки ВВК:</label>
+                        <input type="date" class="form-control" name="date_of_approval">
+                    </div>
+                    <input type="hidden" name="patient_id" value="{{ passport_data.id }}"> 
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary closeModal">Закрыть</button>
+                    <button type="button" class="btn btn-primary" onclick="addVVK()">Добавить</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    </div>
+
+    <!-- Справка о ранении -->
+    <div class="card wide-card-2">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            Справка о ранении
+            <div>
+                <button type="button" class="btn btn-primary" id="addInjuryModalBtn" data-toggle="modal" data-target="#addInjuryModal">Добавить справку о ранении</button>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if certificateOfInjury %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col"></th>
+                            <th scope="col">Номер</th>
+                            <th scope="col">Дата выдачи</th>
+                            <th scope="col">Дата выгрузки</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in certificateOfInjury %}
+                        <tr id="injuryCard{{record.id}}">
+                            <th scope="row">{{ loop.index }}</th>
+                            <td>
+                                <span id="injury_number_{{record.id}}">{{ record.injury_number }}</span>
+                                <input type="text" class="form-control d-none" id="edit_injury_number_{{record.id}}" value="{{ record.injury_number }}">
+                            </td>
+                            <td>
+                                <span id="certificate_injury_date_{{record.id}}">{{ record.certificate_injury_date | format_datetime("%d.%m.%Y") }}</span>
+                                <input type="date" class="form-control d-none" id="edit_certificate_injury_date_{{record.id}}" value="{{ record.certificate_injury_date }}">
+                            </td>
+                            <td>
+                                <span id="load_date_{{record.id}}">{{ record.load_date | format_datetime("%d.%m.%Y") }}</span>
+                                <input type="date" class="form-control d-none" id="edit_load_date_{{record.id}}" value="{{ record.load_date }}">
+                            </td>
+                            <td>
+                                <input type="hidden" id="edit_patient_id_{{record.id}}" value="{{ record.patient_id }}"> <!-- Add this line -->
+                                <button type="button" class="btn btn-primary editBtn-2" data-record="{{ record.id }}" data-patient="{{ record.patient_id }}">Редактировать</button>
+                                <button type="button" class="btn btn-success saveBtn-2 d-none" data-record="{{ record.id }}">Сохранить</button>
+                                <button type="button" class="btn btn-danger" onclick="deletePatientInjury({{passport_data.id}}, {{record.id}})">Удалить</button>    
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Нет записей о Справках о ранении.</p>
+            {% endif %}
+        </div>
+    </div>
+
+
+    <!-- Модальное окно для добавления записей о Справках о ранении  -->
+    <div class="modal fade" id="addInjuryModal" tabindex="-1" role="dialog" aria-labelledby="addInjuryModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form id="addInjuryForm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addInjuryModalLabel">Добавить перемещение</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Дата выдачи:</label>
+                            <input type="date" class="form-control" name="certificate_injury_date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Номер справки о ранении:</label>
+                            <input type="text" class="form-control" name="injury_number" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Дата выгрузки в Алушту</label>
+                            <input type="date" class="form-control" name="load_date">
+                        </div>
+                        <input type="hidden" name="patient_id" value="{{ passport_data.id }}"> 
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary closeModal">Закрыть</button>
+                        <button type="button" class="btn btn-primary" onclick="addInjury()">Добавить</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно для редактирования записи о Справках о ранении -->
+    <div class="modal fade" id="editInjuryModalRenamed" tabindex="-1" role="dialog" aria-labelledby="editInjuryModalRenamedLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form id="editInjuryFormRenamed">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editInjuryModalRenamedLabel">Редактировать справку о ранении</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Номер справки:</label>
+                            <input type="text" class="form-control" name="injury_number" id="edit_injury_number_renamed" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Дата выдачи:</label>
+                            <input type="date" class="form-control" name="certificate_injury_date" id="edit_certificate_injury_date_renamed" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Дата выгрузки:</label>
+                            <input type="date" class="form-control" name="load_date" id="edit_load_date_renamed" required>
+                        </div>
+                        <input type="hidden" name="patient_id" id="edit_patient_id_renamed">
+                        <input type="hidden" name="record_id" id="edit_record_id_renamed">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                        <button type="button" class="btn btn-primary" onclick="updateInjuryRenamed()">Сохранить изменения</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
+
+    <!-- Справка о тяжести увечья -->
+    <div class="wide-card-full">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            Справка о тяжести увечья
+            <div>
+                <button type="button" class="btn btn-primary" id="addSeverityModalBtn">Добавить справку о тяжести</button>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if certificateOfSeverity_record %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col"></th>
+                            <th scope="col">Номер</th>
+                            <th scope="col">Дата</th>
+                            <th scope="col">Дата утверждения</th>
+                            <th scope="col">Номер утверждения</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in certificateOfSeverity_record %}
+                        <tr id="severityCard{{record.id}}">
+                            <th scope="row">{{ loop.index }}</th>
+                            <td>
+                                <span id="severity_number_{{record.id}}">{{ record.severity_number }}</span>
+                                <input type="text" class="form-control d-none" id="edit_severity_number_{{record.id}}" value="{{ record.severity_number }}">
+                            </td>
+                            <td>
+                                <span id="severity_date_{{record.id}}">{{ record.severity_date | format_datetime("%d.%m.%Y") }}</span>
+                                <input type="date" class="form-control d-none" id="edit_severity_date_{{record.id}}" value="{{ record.severity_date }}">
+                            </td>
+                            <td>
+                                <span id="approval_date_{{record.id}}">{{ record.approval_date | default('', true) }}</span>
+                                <input type="date" class="form-control d-none" id="edit_approval_date_{{record.id}}" value="{{ record.approval_date }}">
+                            </td>
+                            <td>
+                                <span id="approval_number_{{record.id}}">{{ record.approval_number | default('', true) }}</span>
+                                <input type="text" class="form-control d-none" id="edit_approval_number_{{record.id}}" value="{{ record.approval_number }}">
+                            </td>
+                            <td>
+                                <input type="hidden" id="edit_patient_id_{{record.id}}" value="{{ record.patient_id }}"> <!-- Add this line -->
+                                <button type="button" class="btn btn-primary editBtn" data-record="{{ record.id }}" data-patient="{{ record.patient_id }}">Редактировать</button>
+                                <button type="button" class="btn btn-success saveBtn d-none" data-record="{{ record.id }}">Сохранить</button>
+                                <button type="button" class="btn btn-danger" onclick="deletePatientSeverity({{passport_data.id}}, {{record.id}})">Удалить</button>    
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Нет записей о Справках о увечьях.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления записей о Справках о тяжести увечья  -->
+    <div class="modal fade" id="addSeverityModal" tabindex="-1" role="dialog" aria-labelledby="addSeverityModal" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form id="addSeverityForm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addSeverityModalLabel">Добавить информацию о справке о тяжести увечья</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Дата выдачи:</label>
+                            <input type="date" class="form-control" name="severity_date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Номер справки тяжести увечья:</label>
+                            <input type="text" class="form-control" name="severity_number" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Дата выдачи подтверждения:</label>
+                            <input type="date" class="form-control" name="approval_date" >
+                        </div>
+                        <div class="form-group">
+                            <label>Номер справки подтверждения:</label>
+                            <input type="text" class="form-control" name="approval_number" >
+                        </div>
+                        <input type="hidden" name="patient_id" value="{{ passport_data.id }}"> 
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary closeModal">Закрыть</button>
+                        <button type="button" class="btn btn-primary" onclick="addSeverity()">Добавить</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="button-container">
+        <button class="btn btn-success" style="width: 100%;" onclick="generateMedicalReport({{ passport_data.id }})">Первичный осмотр</button>
+        <button class="btn btn-success" style="width: 100%;" onclick="generateDiaryReport({{ passport_data.id }})">Дневники пациента</button>
+        <button class="btn btn-success" style="width: 100%;" onclick="generateAboutFinding({{ passport_data.id }})">Справка о нахождении на госпитализации</button>   
+        <button class="btn btn-success" style="width: 100%;" onclick="generateVVKReport({{ passport_data.id }})">Представление на ВВК на тяжесть увечья</button> 
+        <button class="btn btn-success" style="width: 100%;" onclick="generateVVKReportToCategoryD({{ passport_data.id }})">Представление на ВВК на категорию Д</button>
+        <button class="btn btn-success" style="width: 100%;" onclick="generateVVKReportToCategoryG({{ passport_data.id }})">Представление на ВВК на категорию Г</button> 
+        <button class="btn btn-success" style="width: 100%;" onclick="generateVVKReportToCategoryV({{ passport_data.id }})">Представление на ВВК на категорию В</button>
+        <button class="btn btn-success" style="width: 100%;" onclick="generateWiltingDirection({{ passport_data.id }})">Заявка/направление санаторий</button>
+        <button class="btn btn-success" style="width: 100%;" onclick="generateInjuryRaport({{ passport_data.id }})">Образец рапорта о ранении</button>
+        <button class="btn btn-success" style="width: 100%;" onclick="generateInjurySeverityReport({{ passport_data.id }})">Справка о ранении</button>
+        <button class="btn btn-success" style="width: 100%;" onclick="generateVVKConclution({{ passport_data.id }})">Заключение ВВК</button>
+        <button class="btn btn-success" style="width: 100%;" onclick="generateDischargeEpieriosis({{ passport_data.id }})">Выписной эпикриз</button>
+        <button class="btn btn-success" style="width: 100%;" onclick="generateReferenceReport({{ passport_data.id }})">Справка-доклад</button>
+        <button class="btn btn-success" style="width: 100%;" onclick="generateAtHospitalizationReport({{ passport_data.id }})">Уведомление о госпитализации</button>
+        <button class="btn btn-success" style="width: 100%;" onclick="generateExtractReport({{ passport_data.id }})">Уведомление о выписке</button>
+        <!--<button class="btn btn-success" style="width: 100%;" onclick="generateListHostptal({{ passport_data.id }})">Список больниц в эпикриз</button>-->
+
+
+        <button class="btn btn-danger" onclick="deleteAllPatientData({{ passport_data.id }})">Удалить все данные пациента</button>
+    </div> 
+   <!-- <div class="card-footer">
+        <button class="btn btn-danger" onclick="deleteAllPatientData({{ passport_data.id }})">Удалить все данные пациента</button>
+    </div>-->
+</div>
+
+<script src="/js/jquery-3.7.1.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const today = new Date();
+        const nextYear = new Date(today.setFullYear(today.getFullYear() + 1)); // Дата на 1 год вперед
+        const maxDateTime = nextYear.toISOString().slice(0, 16); // Максимальная дата: текущая + 1 год
+        
+        // Устанавливаем минимально допустимую дату (например, 01.01.1900)
+        const minDateTime = '1900-01-01T00:00';
+
+        // Устанавливаем атрибуты min и max для даты события
+        document.getElementById('event_date').setAttribute('min', minDateTime);
+        document.getElementById('event_date').setAttribute('max', maxDateTime);
+    });
+
+
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const today = new Date().toISOString().split('T')[0]; // Получаем сегодняшнюю дату
+        
+        // Устанавливаем max для даты рождения
+        document.getElementById('birthday_date').setAttribute('max', today);
+        
+        // Устанавливаем max для даты заболевания
+        document.getElementById('date_of_illness').setAttribute('max', today);
+    });
+
+
+    $(document).ready(function() {
+        $(".editBtn").click(function() {
+            var recordId = $(this).data("record");
+            var patientId = $(this).data("patient"); 
+
+            $("#edit_patient_id_" + recordId).val(patientId); 
+
+            $("#severity_number_" + recordId).addClass("d-none");
+            $("#edit_severity_number_" + recordId).removeClass("d-none");
+            $("#severity_date_" + recordId).addClass("d-none");
+            $("#edit_severity_date_" + recordId).removeClass("d-none");
+            $("#approval_date_" + recordId).addClass("d-none");
+            $("#edit_approval_date_" + recordId).removeClass("d-none");
+            $("#approval_number_" + recordId).addClass("d-none");
+            $("#edit_approval_number_" + recordId).removeClass("d-none");
+            $(this).addClass("d-none");
+            $(".saveBtn[data-record='" + recordId + "']").removeClass("d-none");
+        });
+
+        $(".saveBtn").click(function() {
+            var recordId = $(this).data("record");
+            var formData = new FormData();
+            formData.append("patient_id", $("#edit_patient_id_" + recordId).val());
+            formData.append("severity_number", $("#edit_severity_number_" + recordId).val());
+            formData.append("severity_date", $("#edit_severity_date_" + recordId).val());
+            formData.append("approval_date", $("#edit_approval_date_" + recordId).val());
+            formData.append("approval_number", $("#edit_approval_number_" + recordId).val());
+
+            $.ajax({
+                type: "PUT",
+                url: "/pacients/update_certificate_of_severity/" + recordId,
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    $("#severity_number_" + recordId).text(formData.get("severity_number"));
+                    $("#severity_date_" + recordId).text(formData.get("severity_date"));
+                    $("#approval_date_" + recordId).text(formData.get("approval_date"));
+                    $("#approval_number_" + recordId).text(formData.get("approval_number"));
+
+                    $("#severity_number_" + recordId).removeClass("d-none");
+                    $("#edit_severity_number_" + recordId).addClass("d-none");
+                    $("#severity_date_" + recordId).removeClass("d-none");
+                    $("#edit_severity_date_" + recordId).addClass("d-none");
+                    $("#approval_date_" + recordId).removeClass("d-none");
+                    $("#edit_approval_date_" + recordId).addClass("d-none");
+                    $("#approval_number_" + recordId).removeClass("d-none");
+                    $("#edit_approval_number_" + recordId).addClass("d-none");
+                    $(".editBtn[data-record='" + recordId + "']").removeClass("d-none");
+                    $(".saveBtn[data-record='" + recordId + "']").addClass("d-none");
+                },
+                error: function(xhr, status, error) {
+                    console.error(error);
+                }
+            });
+        });
+
+        $(".editBtn-2").click(function() {
+            var recordId = $(this).data("record");
+            var patientId = $(this).data("patient");
+
+            $("#edit_patient_id_" + recordId).val(patientId); 
+
+            $("#injury_number_" + recordId).addClass("d-none");
+            $("#edit_injury_number_" + recordId).removeClass("d-none");
+            $("#certificate_injury_date_" + recordId).addClass("d-none");
+            $("#edit_certificate_injury_date_" + recordId).removeClass("d-none");
+            $("#load_date_" + recordId).addClass("d-none");
+            $("#edit_load_date_" + recordId).removeClass("d-none");
+            $(this).addClass("d-none");
+            $(".saveBtn-2[data-record='" + recordId + "']").removeClass("d-none");
+        });
+
+        $(".saveBtn-2").click(function() {
+            var recordId = $(this).data("record");
+            var formData = new FormData();
+            formData.append("patient_id", $("#edit_patient_id_" + recordId).val());
+            formData.append("injury_number", $("#edit_injury_number_" + recordId).val());
+            formData.append("certificate_injury_date", $("#edit_certificate_injury_date_" + recordId).val());
+            formData.append("load_date", $("#edit_load_date_" + recordId).val());
+
+            $.ajax({
+                type: "PUT",
+                url: "/pacients/update_certificate_of_injury/" + recordId,
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    $("#injury_number_" + recordId).text(formData.get("injury_number"));
+                    $("#certificate_injury_date_" + recordId).text(formData.get("certificate_injury_date"));
+                    $("#load_date_" + recordId).text(formData.get("load_date"));
+
+                    $("#injury_number_" + recordId).removeClass("d-none");
+                    $("#edit_injury_number_" + recordId).addClass("d-none");
+                    $("#certificate_injury_date_" + recordId).removeClass("d-none");
+                    $("#edit_certificate_injury_date_" + recordId).addClass("d-none");
+                    $("#load_date_" + recordId).removeClass("d-none");
+                    $("#edit_load_date_" + recordId).addClass("d-none");
+                    $(".editBtn-2[data-record='" + recordId + "']").removeClass("d-none");
+                    $(".saveBtn-2[data-record='" + recordId + "']").addClass("d-none");
+                },
+                error: function(xhr, status, error) {
+                    console.error(error);
+                }
+            });
+        });
+    });
+
+
+
+     document.addEventListener('DOMContentLoaded', function () {
+            var eventTypeSelect = document.getElementById('event_type');
+            var destinationDepartmentGroup = document.getElementById('destination-department-group');
+
+            eventTypeSelect.addEventListener('change', function () {
+                if (eventTypeSelect.value === 'Перевод в другое отделение') {
+                    destinationDepartmentGroup.classList.remove('hidden');
+                } else {
+                    destinationDepartmentGroup.classList.add('hidden');
+                }
+            });
+        });
+
+    async function deleteMovement(patientId, movementId) {
+        if (confirm('Вы уверены, что хотите удалить это перемещение?')) {
+            const response = await fetch(`/pacients/delete_patient_movement/${patientId}/${movementId}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                // Удаление успешное, обновляем интерфейс
+                document.getElementById(`movementCard${movementId}`).remove();
+                alert('Перемещение успешно удалено.');
+            } else if (response.status === 404) {
+                alert('Перемещение не найдено.');
+            } else if (response.status === 404) {
+                alert('Перемещение не найдено.');
+            } else if (response.status === 403) {
+                alert('Доступ запрещен.');
+            } else {
+                alert('Произошла ошибка при удалении перемещения.');
+            }
+        }
+    }
+
+    async function deletePatientVvk(patientId, vvkId) {
+        if (confirm('Вы уверены, что хотите удалить это заключение ВВК?')) {
+            const response = await fetch(`/pacients/delete_patient_vvk/${patientId}/${vvkId}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                // Удаление успешное, обновляем интерфейс
+                document.getElementById(`vvkCard${vvkId}`).remove();
+                alert('Заключение ВВК успешно удалено.');
+            } else if (response.status === 404) {
+                alert('Перемещение не найдено.');
+            } else if (response.status === 403) {
+                alert('Доступ запрещен.');
+            } else {
+                alert('Произошла ошибка при удалении перемещения.');
+            }
+        }
+    }
+
+    async function deletePatientInjury(patientId, vvkId) {
+        if (confirm('Вы уверены, что хотите удалить эту справку о ранении?')) {
+            const response = await fetch(`/pacients/delete_patient_injury/${patientId}/${vvkId}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                // Удаление успешное, обновляем интерфейс
+                document.getElementById(`injuryCard${vvkId}`).remove();
+                alert('Справка о ранении успешно удалена.');
+            } else if (response.status === 404) {
+                alert('Справка о ранении не найдена.');
+            } else if (response.status === 403) {
+                alert('Доступ запрещен.');
+            } else {
+                alert('Произошла ошибка при удалении перемещения.');
+            }
+        }
+    }
+
+    async function deletePatientSeverity(patientId, vvkId) {
+        if (confirm('Вы уверены, что хотите удалить эту справку о тяжести увечья?')) {
+            const response = await fetch(`/pacients/delete_patient_severity/${patientId}/${vvkId}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                // Удаление успешное, обновляем интерфейс
+                document.getElementById(`severityCard${vvkId}`).remove();
+                alert('Справка о тяжести увечья успешно удалена.');
+            } else if (response.status === 404) {
+                alert('Справка о тяжести увечья не найдена.');
+            } else if (response.status === 403) {
+                alert('Доступ запрещен.');
+            } else {
+                alert('Произошла ошибка при удалении перемещения.');
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+    // Функция для добавления слушателей событий закрытия модальных окон
+    function attachCloseModalListeners() {
+        const closeButtons = document.querySelectorAll('.close, .btn-secondary');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const modal = button.closest('.modal');
+                if (modal) {
+                    modal.classList.remove('show');
+                    modal.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    // Функция для добавления слушателей событий открытия модальных окон
+    function attachOpenModalListeners() {
+        document.querySelectorAll('[data-toggle="modal"]').forEach(button => {
+            button.addEventListener('click', function() {
+                const target = document.querySelector(button.getAttribute('data-target'));
+                if (target) {
+                    target.classList.add('show');
+                    target.style.display = 'block';
+                }
+            });
+        });
+    }
+
+    // Вызов функций для добавления слушателей модальных окон
+    attachCloseModalListeners();
+    attachOpenModalListeners();
+
+    // Добавление слушателей событий для динамических модальных окон с использованием циклов
+    {% for record in hospital_records %}
+    const modal{{ loop.index }} = document.getElementById('editHospitalRecordModal{{ loop.index }}');
+    const btnOpen{{ loop.index }} = document.querySelector('[data-target="#editHospitalRecordModal{{ loop.index }}"]');
+    if (modal{{ loop.index }} && btnOpen{{ loop.index }}) {
+        const btnClose{{ loop.index }} = modal{{ loop.index }}.querySelector('.close');
+
+        btnOpen{{ loop.index }}.onclick = function() {
+            modal{{ loop.index }}.style.display = 'block';
+        };
+
+        if (btnClose{{ loop.index }}) {
+            btnClose{{ loop.index }}.onclick = function() {
+                modal{{ loop.index }}.style.display = 'none';
+            };
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal{{ loop.index }}) {
+                modal{{ loop.index }}.style.display = 'none';
+            }
+        };
+    }
+    {% endfor %}
+
+    // Добавление слушателя событий для модального окна редактирования паспорта
+    const editPassportModal = document.getElementById('editPassportModal');
+    const btnOpenEdit = document.getElementById('openEditModal');
+    if (editPassportModal && btnOpenEdit) {
+        const btnCloseEdit = editPassportModal.querySelector('.close');
+        const btnCancelEdit = document.getElementById('cancelEditModal');
+
+        btnOpenEdit.onclick = function() {
+            editPassportModal.style.display = 'block';
+        };
+
+        [btnCloseEdit, btnCancelEdit].forEach(button => {
+            if (button) {
+                button.onclick = function() {
+                    editPassportModal.style.display = 'none';
+                };
+            }
+        });
+
+        window.onclick = function(event) {
+            if (event.target == editPassportModal) {
+                editPassportModal.style.display = 'none';
+            }
+        };
+    }
+
+    // Добавление слушателя событий для проверки воинского звания
+    const militaryRankInput = document.getElementById('military_rank');
+    if (militaryRankInput) {
+        militaryRankInput.addEventListener('change', function() {
+            var valid = false;
+            const options = document.getElementById('ranks').options;
+            for (var i = 0; i < options.length; i++) {
+                if (options[i].value === this.value) {
+                    valid = true;
+                    break;
+                }
+            }
+            if (!valid) {
+                alert('Пожалуйста, выберите воинское звание из списка.');
+                this.value = ''; // Очистка поля, если введено неверное значение
+            }
+        });
+    }
+
+    // Добавление слушателей событий для модального окна добавления перемещения
+    const addMovementBtn = document.getElementById('addMovementBtn');
+    const addMovementModal = document.getElementById('addMovementModal');
+    if (addMovementBtn && addMovementModal) {
+        addMovementBtn.addEventListener('click', function() {
+            addMovementModal.style.display = 'block';
+            addMovementModal.classList.add('show');
+        });
+
+        addMovementModal.addEventListener('click', function(event) {
+            if (event.target.classList.contains('close') || event.target === addMovementModal) {
+                addMovementModal.style.display = 'none';
+                addMovementModal.classList.remove('show');
+            }
+        });
+    }
+
+    const addVVKModalBtn = document.getElementById('addVVKModalBtn');
+    const addVVKModal = document.getElementById('addVVKModal');
+    if (addVVKModalBtn && addVVKModal) {
+        addVVKModalBtn.addEventListener('click', function() {
+            addVVKModal.style.display = 'block';
+            addVVKModal.classList.add('show');
+        });
+
+        addVVKModal.addEventListener('click', function(event) {
+            if (event.target.classList.contains('close') || event.target === addVVKModal) {
+                addVVKModal.style.display = 'none';
+                addVVKModal.classList.remove('show');
+            }
+        });
+    }
+
+    const addInjuryModalBtn = document.getElementById('addInjuryModalBtn');
+    const addInjuryModal = document.getElementById('addInjuryModal');
+    if (addInjuryModalBtn && addInjuryModal) {
+        addInjuryModalBtn.addEventListener('click', function() {
+            addInjuryModal.style.display = 'block';
+            addInjuryModal.classList.add('show');
+        });
+
+        addInjuryModal.addEventListener('click', function(event) {
+            if (event.target.classList.contains('close') || event.target === addInjuryModal) {
+                addInjuryModal.style.display = 'none';
+                addInjuryModal.classList.remove('show');
+            }
+        });
+    }
+
+    const addSeverityModalBtn = document.getElementById('addSeverityModalBtn');
+    const addSeverityModal = document.getElementById('addSeverityModal');
+    if (addSeverityModalBtn && addSeverityModal) {
+        addSeverityModalBtn.addEventListener('click', function() {
+            addSeverityModal.style.display = 'block';
+            addSeverityModal.classList.add('show');
+        });
+
+        addSeverityModal.addEventListener('click', function(event) {
+            if (event.target.classList.contains('close') || event.target === addSeverityModal) {
+                addSeverityModal.style.display = 'none';
+                addSeverityModal.classList.remove('show');
+            }
+        });
+    }
+
+    
+
+    });
+
+
+  
+
+    function addVVK() {
+    $.post("/pacients/create_patient_vvk", $("#addVVKForm").serialize())
+        .done(function(data) {
+            $(".wide-card").load(location.href + " .wide-card", function() {
+                $("#addVVKForm")[0].reset(); // Очистка формы после добавления записи
+                $("#addVVKModal").modal("hide"); // Закрытие модального окна
+
+                // Перезагрузка страницы после закрытия модального окна
+                location.reload();
+            });
+        })
+        .fail(function(xhr, status, error) {
+            if (xhr.status === 403) {
+                alert("Ошибка доступа: Доступ запрещен");
+            } else {
+                console.error("Error:", error);
+            }
+        });
+}
+  
+
+    
+    function addInjury() {
+        $.post("/pacients/create_patient_injury", $("#addInjuryForm").serialize())
+            .done(function(data) {
+                $(".wide-card-2").load(location.href + " .wide-card-2");
+                $("#addInjuryModal").modal("hide");
+                location.reload();
+            })
+            .fail(function(xhr, status, error) {
+                if (xhr.status === 403) {
+                    alert("Ошибка доступа: Доступ запрещен");
+                } else {
+                    console.error("Error:", error);
+                }
+            });
+    }
+
+   
+    function addSeverity() {
+        // Отправка POST-запроса на сервер для добавления записи
+        $.post("/pacients/create_patient_severity", $("#addSeverityForm").serialize())
+            .done(function(data) {
+                // Обновление данных в <div class="wide-card-full">
+                $(".wide-card-full").load(location.href + " .wide-card-full");
+                // Закрытие модального окна
+                $("#addSeverityModal").modal("hide");
+                location.reload();
+            })
+            .fail(function(xhr, status, error) {
+                // Обработка ошибки
+                if (xhr.status === 403) {
+                    // Ошибка доступа
+                    alert("Ошибка доступа: Доступ запрещен");
+                } else {
+                    // Другая ошибка
+                    console.error("Error:", error);
+                }
+            });
+    }
+
+
+    function generateVVKConclution(patientId) {
+        fetch(`/vvk-conclusion/${patientId}`)
+        .then(response => {
+            if (response.ok) {
+                response.json().then(data => {
+                    // Создаем временную ссылку и программно "нажимаем" на неё для начала загрузки
+                    const link = document.createElement('a');
+                    link.href = data.download_link; // Установка URL для скачивания файла
+                    link.setAttribute('download', true); // Атрибут download, чтобы браузер начал загрузку
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove(); // Удаляем элемент после скачивания
+                });
+            } else {
+                response.json().then(data => {
+                    alert('Ошибка при создании отчёта: ' + data.detail);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при создании отчёта:', error);
+            alert('Ошибка: ' + error.message);
+        });
+    }
+
+    function generateAboutFinding(patientId) {
+        fetch(`/about-finding/${patientId}`)
+        .then(response => {
+            if (response.ok) {
+                response.json().then(data => {
+                    // Создаем временную ссылку и программно "нажимаем" на неё для начала загрузки
+                    const link = document.createElement('a');
+                    link.href = data.download_link; // Установка URL для скачивания файла
+                    link.setAttribute('download', true); // Атрибут download, чтобы браузер начал загрузку
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove(); // Удаляем элемент после скачивания
+                });
+            } else {
+                response.json().then(data => {
+                    alert('Ошибка при создании отчёта: ' + data.detail);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при создании отчёта:', error);
+            alert('Ошибка: ' + error.message);
+        });
+    }
+
+    function generateWiltingDirection(patientId) {
+        fetch(`/wilting-direction/${patientId}`)
+        .then(response => {
+            if (response.ok) {
+                response.json().then(data => {
+                    // Создаем временную ссылку и программно "нажимаем" на неё для начала загрузки
+                    const link = document.createElement('a');
+                    link.href = data.download_link; // Установка URL для скачивания файла
+                    link.setAttribute('download', true); // Атрибут download, чтобы браузер начал загрузку
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove(); // Удаляем элемент после скачивания
+                });
+            } else {
+                response.json().then(data => {
+                    alert('Ошибка при создании отчёта: ' + data.detail);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при создании отчёта:', error);
+            alert('Ошибка: ' + error.message);
+        });
+    }
+
+    function generateListHostptal(patientId) {
+        fetch(`/list-of-hospitals-download/${patientId}`)
+        .then(response => {
+            if (response.ok) {
+                response.json().then(data => {
+                    // Создаем временную ссылку и программно "нажимаем" на неё для начала загрузки
+                    const link = document.createElement('a');
+                    link.href = data.download_link; // Установка URL для скачивания файла
+                    link.setAttribute('download', true); // Атрибут download, чтобы браузер начал загрузку
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove(); // Удаляем элемент после скачивания
+                });
+            } else {
+                response.json().then(data => {
+                    alert('Ошибка при создании отчёта: ' + data.detail);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при создании отчёта:', error);
+            alert('Ошибка: ' + error.message);
+        });
+    }
+
+   
+
+    function generateExtractReport(patientId) {
+        fetch(`/extract-report/${patientId}`)
+        .then(response => {
+            if (response.ok) {
+                response.json().then(data => {
+                    // Создаем временную ссылку и программно "нажимаем" на неё для начала загрузки
+                    const link = document.createElement('a');
+                    link.href = data.download_link; // Установка URL для скачивания файла
+                    link.setAttribute('download', true); // Атрибут download, чтобы браузер начал загрузку
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove(); // Удаляем элемент после скачивания
+                });
+            } else {
+                response.json().then(data => {
+                    alert('Ошибка при создании отчёта: ' + data.detail);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при создании отчёта:', error);
+            alert('Ошибка: ' + error.message);
+        });
+    }
+    
+
+    function generateAtHospitalizationReport(patientId) {
+        fetch(`/at-hostpitalization-report/${patientId}`)
+        .then(response => {
+            if (response.ok) {
+                response.json().then(data => {
+                    // Создаем временную ссылку и программно "нажимаем" на неё для начала загрузки
+                    const link = document.createElement('a');
+                    link.href = data.download_link; // Установка URL для скачивания файла
+                    link.setAttribute('download', true); // Атрибут download, чтобы браузер начал загрузку
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove(); // Удаляем элемент после скачивания
+                });
+            } else {
+                response.json().then(data => {
+                    alert('Ошибка при создании отчёта: ' + data.detail);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при создании отчёта:', error);
+            alert('Ошибка: ' + error.message);
+        });
+    }
+
+
+    function generateReferenceReport(patientId) {
+        fetch(`/reference-report/${patientId}`)
+        .then(response => {
+            if (response.ok) {
+                response.json().then(data => {
+                    // Создаем временную ссылку и программно "нажимаем" на неё для начала загрузки
+                    const link = document.createElement('a');
+                    link.href = data.download_link; // Установка URL для скачивания файла
+                    link.setAttribute('download', true); // Атрибут download, чтобы браузер начал загрузку
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove(); // Удаляем элемент после скачивания
+                });
+            } else {
+                response.json().then(data => {
+                    alert('Ошибка при создании отчёта: ' + data.detail);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при создании отчёта:', error);
+            alert('Ошибка: ' + error.message);
+        });
+    }
+
+    function generateDischargeEpieriosis(patientId) {
+        fetch(`/discharge-epieriosis/${patientId}`)
+        .then(response => {
+            if (response.ok) {
+                response.json().then(data => {
+                    // Создаем временную ссылку и программно "нажимаем" на неё для начала загрузки
+                    const link = document.createElement('a');
+                    link.href = data.download_link; // Установка URL для скачивания файла
+                    link.setAttribute('download', true); // Атрибут download, чтобы браузер начал загрузку
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove(); // Удаляем элемент после скачивания
+                });
+            } else {
+                response.json().then(data => {
+                    alert('Ошибка при создании отчёта: ' + data.detail);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при создании отчёта:', error);
+            alert('Ошибка: ' + error.message);
+        });
+    }
+
+    function generateVVKReport(patientId) {
+        fetch(`/vvk-report/${patientId}`)
+        .then(response => {
+            if (response.ok) {
+                response.json().then(data => {
+                    // Создаем временную ссылку и программно "нажимаем" на неё для начала загрузки
+                    const link = document.createElement('a');
+                    link.href = data.download_link; // Установка URL для скачивания файла
+                    link.setAttribute('download', true); // Атрибут download, чтобы браузер начал загрузку
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove(); // Удаляем элемент после скачивания
+                });
+            } else {
+                response.json().then(data => {
+                    alert('Ошибка при создании отчёта: ' + data.detail);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при создании отчёта:', error);
+            alert('Ошибка: ' + error.message);
+        });
+    }
+
+    function generateVVKReportToCategoryG(patientId) {
+        fetch(`/vvk-report-to-category-g/${patientId}`)
+        .then(response => {
+            if (response.ok) {
+                response.json().then(data => {
+                    // Создаем временную ссылку и программно "нажимаем" на неё для начала загрузки
+                    const link = document.createElement('a');
+                    link.href = data.download_link; // Установка URL для скачивания файла
+                    link.setAttribute('download', true); // Атрибут download, чтобы браузер начал загрузку
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove(); // Удаляем элемент после скачивания
+                });
+            } else {
+                response.json().then(data => {
+                    alert('Ошибка при создании отчёта: ' + data.detail);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при создании отчёта:', error);
+            alert('Ошибка: ' + error.message);
+        });
+    }
+
+    function generateVVKReportToCategoryV(patientId) {
+        fetch(`/vvk-report-to-category-v/${patientId}`)
+        .then(response => {
+            if (response.ok) {
+                response.json().then(data => {
+                    // Создаем временную ссылку и программно "нажимаем" на неё для начала загрузки
+                    const link = document.createElement('a');
+                    link.href = data.download_link; // Установка URL для скачивания файла
+                    link.setAttribute('download', true); // Атрибут download, чтобы браузер начал загрузку
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove(); // Удаляем элемент после скачивания
+                });
+            } else {
+                response.json().then(data => {
+                    alert('Ошибка при создании отчёта: ' + data.detail);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при создании отчёта:', error);
+            alert('Ошибка: ' + error.message);
+        });
+    }
+
+
+    function generateVVKReportToCategoryV(patientId) {
+        fetch(`/vvk-report-to-category-v/${patientId}`)
+        .then(response => {
+            if (response.ok) {
+                response.json().then(data => {
+                    // Создаем временную ссылку и программно "нажимаем" на неё для начала загрузки
+                    const link = document.createElement('a');
+                    link.href = data.download_link; // Установка URL для скачивания файла
+                    link.setAttribute('download', true); // Атрибут download, чтобы браузер начал загрузку
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove(); // Удаляем элемент после скачивания
+                });
+            } else {
+                response.json().then(data => {
+                    alert('Ошибка при создании отчёта: ' + data.detail);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при создании отчёта:', error);
+            alert('Ошибка: ' + error.message);
+        });
+    }
+
+    function generateVVKReportToCategoryD(patientId) {
+        fetch(`/vvk-report-to-category-d/${patientId}`)
+        .then(response => {
+            if (response.ok) {
+                response.json().then(data => {
+                    // Создаем временную ссылку и программно "нажимаем" на неё для начала загрузки
+                    const link = document.createElement('a');
+                    link.href = data.download_link; // Установка URL для скачивания файла
+                    link.setAttribute('download', true); // Атрибут download, чтобы браузер начал загрузку
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove(); // Удаляем элемент после скачивания
+                });
+            } else {
+                response.json().then(data => {
+                    alert('Ошибка при создании отчёта: ' + data.detail);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при создании отчёта:', error);
+            alert('Ошибка: ' + error.message);
+        });
+    }
+
+    
+    function generateDiaryReport(patientId) {
+        fetch(`/create_patient_diary/${patientId}`)
+        .then(response => {
+            if (response.ok) {
+                response.json().then(data => {
+                    // Создаем временную ссылку и программно "нажимаем" на неё для начала загрузки
+                    const link = document.createElement('a');
+                    link.href = data.download_link; // Установка URL для скачивания файла
+                    link.setAttribute('download', true); // Атрибут download, чтобы браузер начал загрузку
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove(); // Удаляем элемент после скачивания
+                });
+            } else {
+                response.json().then(data => {
+                    alert('Ошибка при создании отчёта: ' + data.detail);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при создании отчёта:', error);
+            alert('Ошибка: ' + error.message);
+        });
+    }
+    
+    function generateInjuryRaport(patientId) {
+    fetch(`/raport-new/${patientId}`)
+    .then(response => {
+        if (response.ok) {
+            response.json().then(data => {
+                // Создаем временную ссылку и программно "нажимаем" на неё для начала загрузки
+                const link = document.createElement('a');
+                link.href = data.download_link; // Установка URL для скачивания файла
+                link.setAttribute('download', true); // Атрибут download, чтобы браузер начал загрузку
+                document.body.appendChild(link);
+                link.click();
+                link.remove(); // Удаляем элемент после скачивания
+            });
+        } else if (response.status === 500) {
+            alert('Заполните поля пациента.');
+        } else {
+            response.json().then(data => {
+                alert('Ошибка при создании отчёта: ' + data.detail);
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка при создании отчёта:', error);
+        alert('Ошибка: ' + error.message);
+    });
+}
+
+
+    function generateInjurySeverityReport(patientId) {
+        fetch(`/injury-severity-report/${patientId}`)
+        .then(response => {
+            if (response.ok) {
+                response.json().then(data => {
+                    // Создаем временную ссылку и программно "нажимаем" на неё для начала загрузки
+                    const link = document.createElement('a');
+                    link.href = data.download_link; // Установка URL для скачивания файла
+                    link.setAttribute('download', true); // Атрибут download, чтобы браузер начал загрузку
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove(); // Удаляем элемент после скачивания
+                });
+            } else if (response.status === 500) {
+            alert('Заполните поля пациента.');
+            } else {
+                response.json().then(data => {
+                    alert('Ошибка при создании отчёта: ' + data.detail);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при создании отчёта:', error);
+            alert('Ошибка: ' + error.message);
+        });
+    }
+
+
+    function deleteAllPatientData(patientId) {
+            if (confirm('Вы действительно хотите удалить все данные этого пациента? Это действие необратимо!')) {
+                fetch(`/pacients/delete_all_patient_data/${patientId}`, {
+                    method: 'DELETE'
+                }).then(response => {
+                    if (response.ok) {
+                        alert('Все данные пациента успешно удалены');
+                        if (document.referrer) {
+                            window.location.href = document.referrer; // Возвращение на предыдущую страницу
+                        } else {
+                            window.location.href = '/'; // Перенаправление на главную страницу, если referrer не доступен
+                        }
+                    }   
+                    else if (response.status === 403) {
+                        alert('Доступ запрещен.');
+                    }
+                    else {
+                        alert('Ошибка при удалении данных');
+                    }
+                }).catch(error => {
+                    alert('Ошибка при удалении данных: ' + error.message);
+                });
+            }
+        }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var btnCancelEdit = document.getElementById('cancelEditModal');
+        if (btnCancelEdit) {
+            btnCancelEdit.addEventListener('click', function() {
+                var modal = this.closest('.modal');
+                modal.style.display = 'none';
+            });
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var closeButtons = document.querySelectorAll('.closeModal');
+        closeButtons.forEach(function(button) {
+            button.addEventListener('click', function() {
+                var modal = this.closest('.modal');
+                modal.style.display = 'none';
+            });
+        });
+    });
+    
+    function generateMedicalReport(patientId) {
+        fetch(`/generate_medical_report/${patientId}`)
+        .then(response => {
+            if (response.ok) {
+                response.json().then(data => {
+                    // Создаём временную ссылку и программно "нажимаем" на неё для начала загрузки
+                    const link = document.createElement('a');
+                    link.href = data.download_link; // Установка URL для скачивания файла
+                    link.setAttribute('download', true); // Атрибут download, чтобы браузер начал загрузку
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove(); // Удаляем элемент после скачивания
+                });
+            } else {
+                response.json().then(data => {
+                    alert('Ошибка при создании отчёта: ' + data.detail);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при создании отчёта:', error);
+            alert('Ошибка: ' + error);
+        });}
+    
+
+
+
+</script>
+
+</body>
+</html>

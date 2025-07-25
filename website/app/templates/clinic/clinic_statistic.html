@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Статистика поликлиники</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        h2 {
+            margin-top: 40px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        #overallStats p {
+            font-size: 16px;
+            margin: 10px 0;
+            color: #555;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            th, td {
+                padding: 10px;
+            }
+        }
+    </style>
+    <script src="/js/chart.js"></script>
+
+    <link rel="icon" href="/img/logo_first.png" type="image/png">
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+    <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+
+    {% block content %}
+    <div class="container">
+        <h2>Статистика поликлиники</h1>
+
+        <h1>Общая статистика</h1>
+        <div id="overallStats">
+            <!-- Здесь будет отображена сводная статистика -->
+        </div>
+
+        <h1>Пациенты по месяцам</h1>
+        <canvas id="monthlyPatientsChart"></canvas>
+
+
+        <h1>Пациенты по врачам</h1>
+        <canvas id="doctorPatientsChart" width="400" height="200"></canvas>
+
+    </div>
+    <script>
+        function loadStatistics() {
+            fetch('/clinic/statistics/monthly_patients')
+    .then(response => response.json())
+    .then(data => {
+        const months = data.map(stat => stat.month);
+        const counts = data.map(stat => stat.count);
+
+        const ctx = document.getElementById('monthlyPatientsChart').getContext('2d');
+        const monthlyPatientsChart = new Chart(ctx, {
+            type: 'line', // или 'bar' для столбчатого графика
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Количество пациентов',
+                    data: counts,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderWidth: 2,
+                    fill: true
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    });
+
+
+
+    fetch('/clinic/statistics/doctor_patients')
+    .then(response => response.json())
+    .then(data => {
+        const doctorNames = data.map(stat => stat.doctor_name);
+        const counts = data.map(stat => stat.count);
+
+        const ctx = document.getElementById('doctorPatientsChart').getContext('2d');
+        const doctorPatientsChart = new Chart(ctx, {
+            type: 'bar', // или 'line' для линейного графика
+            data: {
+                labels: doctorNames,
+                datasets: [{
+                    label: 'Количество пациентов',
+                    data: counts,
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    });
+
+
+    fetch('/clinic/statistics/overall')
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log(data); // Логируем данные для проверки структуры
+
+        const overallStats = document.getElementById('overallStats');
+        overallStats.innerHTML = `
+            <p>Общее количество пациентов: ${data.total_patients}</p>
+             <p>Общее количество обращений к врачам: ${data.total_appointments}</p>
+            
+            <p>Общее количество пациентов сегодня: ${data.total_patients_today}</p>
+            <p>Количество пациентов на ВВК сегодня: ${data.vvk_today}</p>
+            <p>Количество госпитализаций сегодня: ${data.hospitalizations_today}</p>
+           
+        `;
+    })
+    .catch(error => {
+        console.error('Ошибка при получении данных:', error);
+        // Можно также отобразить сообщение об ошибке на странице
+    });
+
+        }
+
+        document.addEventListener('DOMContentLoaded', loadStatistics);
+    </script>
+</body>
+{% endblock %}
+</html>

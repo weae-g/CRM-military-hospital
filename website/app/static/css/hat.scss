@@ -1,0 +1,159 @@
+/* breakpoint in pixels for responsive */
+
+$breakpoint: 980px;
+
+/* dropdown Menu core scss */
+
+ul {
+  display: inline-block;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  z-index: 100;
+  li {
+    position: relative;
+    display: inline-block;
+    &:hover {
+      > ul {
+        display: inherit;
+        li {
+          display: list-item;
+        }
+      }
+    }
+    a {
+      display: block;
+    }
+    ul {
+      display: none;
+      position: absolute;
+      /* optional: submenu is same width than parent entry width */
+      min-width: 100%;
+      /* optional: submenu background color */
+      background-color: #aaa;
+      ul {
+        left: 100%;
+        top: 0;
+      }
+    }
+  }
+}
+
+
+/* Responsiveness core scss */
+
+@media (max-width: $breakpoint) {
+  ul {
+    display: inherit;
+    &:first-child:before {
+      background-color: #222;
+      content: 'MENU';
+      display: block;
+      padding: 1rem;
+      color: #fff;
+      text-align: right;
+    }
+    &:active,
+    &:focus,
+    &:hover {
+      li {
+        display: list-item;
+      }
+    }
+    li {
+      display: none;
+      background-color: #aaa;
+      ul {
+        position: relative;
+        min-width: auto;
+        display: inherit;
+        border-top: 2px solid #999;
+        li {
+          display: block;
+          a {
+            position: relative;
+            &:before {
+              content: '';
+              padding-left: 1.5%;
+            }
+          }
+          ul {
+            left: 0;
+          }
+        }
+      }
+    }
+  }
+}
+
+
+/* ------------- optional styling below ------------ */
+
+
+/* Following declarations are OPTIONAL */
+
+body {
+  background-color: #ddd;
+  font-family: Arial;
+}
+
+html,
+body {
+  margin: 25px;
+}
+body {
+  overflow-Y: scroll;
+}
+
+nav {
+  background-color: #333;
+  margin-bottom: 50px;
+  ul {
+    li {
+      &:hover {
+        background-color: #888;
+      }
+    }
+  }
+}
+
+a {
+  color: #fff;
+  text-decoration: none;
+  padding: 15px;
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+}
+
+li > a:after {
+  content: ' +';
+  float: right;
+  margin-left: 5px;
+}
+
+li > a:only-child:after {
+  content: '';
+}
+
+div {
+  font-size: 2rem;
+  h1 {
+    border-left: 7.5px solid #bbb;
+    font-size: 2rem;
+    padding-left: 15px;
+    display: inline-block;
+    font-weight: 100;
+  }
+  div {
+    font-size: 1rem;
+    padding-left: 15+7.5px;
+    font-style: italic;
+    color: #666;
+    a {
+      color: #333;
+      padding: 0;
+      text-decoration: underline;
+    }
+  }
+}

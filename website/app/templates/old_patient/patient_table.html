@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/img/logo_first.png" type="image/png">
+    <title>Учёт госпитализированных пациентов до мая 2024 года.</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            box-sizing: border-box;
+        }
+    </style>
+        <link rel="icon" href="/img/logo_first.png" type="image/png">
+    <script>
+        function searchTable() {
+            let input, filter, table, tr, td, i, j, txtValue;
+            input = document.getElementById("searchInput");
+            filter = input.value.toLowerCase();
+            table = document.getElementById("patientTable");
+            tr = table.getElementsByTagName("tr");
+
+            for (i = 1; i < tr.length; i++) {
+                tr[i].style.display = "none";
+                td = tr[i].getElementsByTagName("td");
+                for (j = 0; j < td.length; j++) {
+                    if (td[j]) {
+                        txtValue = td[j].textContent || td[j].innerText;
+                        if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                            tr[i].style.display = "";
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    {% extends "base.html" %}
+
+    {% block styles %}
+        <link rel="stylesheet" href="/css/hat.css">
+    {% endblock %}
+
+        {% block content %}
+    <h2>Учёт госпитализированных пациентов военного госпиталя до мая 2024 года.</h2>
+
+    <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Наберите, чтобы найти..">
+
+    <table id="patientTable">
+        <thead>
+            <tr>
+                <th>Номер истории</th>
+                <th>Воинское звание</th>
+                <th>Основание службы</th>
+                <th>Воинская часть</th>
+                <th>Военный комиссариат</th>
+                <th>Округ</th>
+                <th>Полное имя</th>
+                <th>Дата рождения</th>
+                <th>Адрес</th>
+                <th>Номер телефона</th>
+                <th>Личные данные</th>
+                <th>Наличие</th>
+                <th>Назначено</th>
+                <th>Дата поступления</th>
+                <th>Дата заболевания</th>
+                <th>Диагноз</th>
+                <th>Отделение</th>
+                <th>Характер госпитализации</th>
+                <th>Перевод</th>
+                <th>Дата убытия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for patient in patients %}
+            <tr>
+                <td>{{ patient.history_number }}</td>
+                <td>{{ patient.military_rank }}</td>
+                <td>{{ patient.service_basis }}</td>
+                <td>{{ patient.military_unit }}</td>
+                <td>{{ patient.military_commissariat }}</td>
+                <td>{{ patient.district }}</td>
+                <td>{{ patient.full_name }}</td>
+                <td>{{ patient.birthday_date }}</td>
+                <td>{{ patient.address }}</td>
+                <td>{{ patient.phone_number }}</td>
+                <td>{{ patient.personal_data }}</td>
+                <td>{{ patient.availability }}</td>
+                <td>{{ patient.assigned_by }}</td>
+                <td>{{ patient.admission_date }}</td>
+                <td>{{ patient.illness_date }}</td>
+                <td>{{ patient.diagnosis }}</td>
+                <td>{{ patient.department }}</td>
+                <td>{{ patient.nature_of_hospitalization }}</td>
+                <td>{{ patient.transfer }}</td>
+                <td>{{ patient.departure }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+</table>
+{% endblock %}
+</body>
+</html>

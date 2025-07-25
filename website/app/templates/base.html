@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% block styles %}
+
+    {% endblock %}
+    <link rel="icon" href="/img/logo_first.png" type="image/png">
+    <style>
+
+
+        main {
+
+            padding-bottom: 60px; /* Высота футера */
+        }
+
+        footer {
+            background-color: #f8f8f8;
+            padding: 20px 0;
+            text-align: center;
+            width: 100%;
+            bottom: 0;
+        }
+
+        .footer-logo img {
+            max-width: 100px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">Домашняя страница</a></li>
+                <li><a href="/pacients/hospitalized_patients_data_on_date/">Приемное отделние</a>
+                    <ul>
+                        <li><a href="/pacients/create_form">Новый пациент</a></li>
+                        <li>
+                            <a href="/pacients/hospitalized_patients_data_on_date/">Пациенты</a>
+                            <ul>
+                                <li>
+                                    <a href="/pacients/passport_data_active/">Пациенты на госпитализации</a>
+                                </li>
+                                <li>
+                                    <a href="/pacients/discharged_on_date/">Выписанные пациенты по датам</a>
+                                </li>
+                                <li>
+                                    <a href="/pacients/hospitalized_patients_data_on_date/">Госпитализированные по датам </a>                               
+                                </li>
+                                <li>
+                                    <a href="/pacients/passport_data_planned/">Планируется перевод </a>                               
+                                </li>
+                                
+                                <li>
+                                    <a href="/pacients/hospitalized_patients/">Архив пациентов</a>                         
+                                </li>
+                                    <a href="/pacients/hospitalized_patients_old/">Старый архив пациентов</a>      
+                                <li>
+
+                                </li>
+
+                                <li>
+                                    <a href="/pacients/export_data_to_excel/">Загрузить архив пациентов</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><a href="/">Доклады</a>
+                            <ul>
+                                <li><a href="/download_department_statistics">Ежедневный доклад о загруженности</a></li>
+                                <!--<li><a href="">Находящиеся и выписанные</a></li>-->
+                                <li><a href="/pacients/patients_with_pneumonia">Отчёт по пневмонии</a></li>                           
+                                <!--<li><a href="">Спецконтингент</a></li>-->                           
+                                <li><a href="/generate_discharge_report">Снятие с котлового довольствования</a></li>
+                                <li><a href="/generate_discharge_report_v2">Ординаторское требование</a></li>
+                            </ul>                          
+                        </li>
+                    </ul>
+                </li>
+                <li><a href="">Отделения</a>
+                <ul>
+                    <li><a href="/pacients/dermatovenerological_department_active">Кожно-венерологическое отделение</a>
+                        <ul>
+                            <li><a href="/pacients/dermatovenerological_department">Архив пациентов</a></li>
+                            <li><a href="/pacients/dermatovenerological_department_active">Паценты на госпитализации</a></li>
+                            <li><a href="/pacients/hospitalized_patients_dermatovenerological_department">Выписанные пациенты</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/pacients/surgery_department_active">Хирургическое отделение</a>
+                    <ul>
+                        <li><a href="/pacients/surgery_department">Архив пациентов</a></li>
+                        <li><a href="/pacients/surgery_department_active">Паценты на госпитализации</a></li>
+                        <li><a href="/pacients/hospitalized_patients_surgery_department">Выписанные пациенты</a></li>
+                    </ul>
+                    </li>
+                    <li><a href="/pacients/neurological_department_active">Неврологическое отделение</a>
+                    <ul>
+                        <li><a href="/pacients/neurological_department">Архив пациентов</a></li>
+                        <li><a href="/pacients/neurological_department_active">Паценты на госпитализации</a></li>
+                        <li><a href="/pacients/hospitalized_patients_neurological_department">Выписанные пациенты</a></li>
+                    </ul>
+                    </li>
+                    <li><a href="/pacients/therapeutic_department_active">Терапевтическое отделение</a>
+                        <ul>
+                            <li><a href="/pacients/therapeutic_department">Архив пациентов</a></li>
+                            <li><a href="/pacients/therapeutic_department_active">Паценты на госпитализации</a></li>
+                            <li><a href="/pacients/hospitalized_patients_therapeutic_department">Выписанные пациенты</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/pacients/infectious_diseases_department_active">Инфекционное отделение</a>
+                        <ul>
+                            <li><a href="/pacients/infectious_diseases_department">Архив пациентов</a></li>
+                            <li><a href="/pacients/infectious_diseases_department_active">Паценты на госпитализации</a></li>
+                            <li><a href="/pacients/hospitalized_patients_infectious_diseases_department">Выписанные пациенты</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                </li>
+               <li><a href="/clinic/patient">Поликлиника</a>
+                    <ul>
+                        <li><a href="/clinic/patient">Пациенты</a></li>
+                        <li><a href="/clinic/by-date">Паценты по дате амбулаторной карты</a></li>
+                        <li><a href="/clinic/hospitalizations/by-date">Паценты по дате госпитализации</a></li>
+                        <li><a href="/clinic/statistics">Статистика</a></li>                        
+                        <li><a href="/documents">Шаблоны осмотров</a></li>
+                        <li><a href="/clinic/doctors">Врачи</a></li>
+                        <li><a href="/clinic/doctors/administration">Изменение данных о врачах</a></li>
+                    </ul>
+                </li>
+                <li><a href="/pacients/vvk_patients" aria-label="Медчасть">Администрация</a>
+                    <ul>
+                        <li><a href="/vpd" aria-label="Медчасть">Делопроизводство</a></li>
+                        <li><a href="/pacients/vvk_patients" aria-label="Медчасть">Медчасть</a>
+                            <ul>
+                                <li><a href="/pacients/vvk_patients" aria-label="Заключения ВВК">Заключения ВВК</a></li>
+                                <li><a href="/pacients/injury_certificates" aria-label="Справки о ранении">Справки о ранении</a></li>
+                                <li><a href="/pacients/severity_certificates" aria-label="Справки о тяжести увечья">Справки о тяжести увечья</a></li>
+                            </ul>
+                    </li>
+                    </ul>
+                </li>
+                <!--<li><a href="/document/archive">Документы образца</a>
+                <ul>
+                    <li><a href="">Первичный осмотр</a></li>
+                    <li><a href="">Переводной эпикриз</a></li>
+                    <li><a href="/vvk">Заключения ВВК</a></li>
+                </ul>-->
+                <!--<li><a href="/pacients/rkb">РКБ</a></li>-->
+                </li>
+                <li>
+                    <li><a href="/directory">Справочник</a></li>
+                    <li><a href="/otx/rkb">Все базы</a>
+                        <ul>
+                            <li>
+                                <a href="/otx/patients/">Госпитализированные пациенты</a>    
+                            </li>
+                            <li>
+                                <a href="/otx/rkb">База РКБ</a>
+                                <ul>
+                                    <li><a href="/otx/rkb_drawn">Выписанные за нарушения</a></li>
+                                    <li><a href="/otx/rkb_hospitalized">Находящиеся на госпитализации</a></li>
+                                    <li><a href="/otx/rkb_drawn">Архив пациентов </a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="/otx/gkb7">База ГКБ №7</a>
+                                <ul>
+                                    <li><a href="/otx/gkb7_drawn">Выписанные за нарушения</a></li>
+                                    <li><a href="/otx/gkb7_hospitalized">Находящиеся на госпитализации</a></li>
+                                    <li><a href="/otx/gkb7">Архив пациентов </a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="/otx/gvv">База ГдВВ</a>
+                                <ul>
+                                    <li><a href="/otx/gvv_drawn">Выписанные за нарушения</a></li>
+                                    <li><a href="/otx/gvv_hospitalized">Находящиеся на госпитализации</a></li>
+                                    <li><a href="/otx/gvv">Архив пациентов </a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="/otx/ds/">Дневной стационар</a>    
+                            </li>
+                            <li>
+                                <a href="/pacients/hospitalized_patients/">Архив пациентов</a>    
+                            </li>
+                            <li>
+                                <a href="/pacients/hospitalized_patients_old/">Старый архив пациентов</a>
+                            </li>
+                            <li>
+                                <li><a href="/otx/clinic">Пациенты Поликилиники</a></li>
+                            </li>
+                        </ul>                       
+                    </li>
+                    <li><a href="/instruction">Информация о системе</a>
+                        <ul>
+                            <li>
+                                <a href="/history_of_discovery">В память об открытии госпиталя</a>
+                            </li>
+                            <li>
+                                <a href="/users/">Настройка доступа</a>
+                            </li>
+                        </ul>
+                    </li>
+                </li>                
+            </ul>
+            
+        </nav>      
+    
+    </header>
+    <main>
+        {% block content %}
+        <!-- Основной контент страницы -->
+        {% endblock %}
+    </main>
+    <footer>
+        <div class="footer-logo">
+            <img src="/img/logo_first.png" alt="Логотип" aria-label="Логотип">
+        </div>
+    </footer>
+  
+    {% block scripts %}
+    <!-- Скрипты страницы -->
+    {% endblock %}
+</body>
+</html>
