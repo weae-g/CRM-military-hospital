@@ -28,6 +28,7 @@ ENV/
 
 # Logs
 *.log
+website/app/logs/
 website/app/logs/*.log
 
 # OS
