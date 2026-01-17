@@ -29,6 +29,9 @@ COPY website/ /app/website/
 # Создаем директорию для логов
 RUN mkdir -p /app/website/app/logs
 
+# Создаем временную директорию для приложения
+RUN mkdir -p /app/temp && chmod 777 /app/temp
+
 # Создаем пользователя без root прав
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
