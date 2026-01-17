@@ -23,17 +23,18 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Устанавливаем дополнительные зависимости для production
 RUN pip install --no-cache-dir uvicorn[standard] gunicorn python-dotenv
 
-# Копируем весь проект
-COPY website/ /app/website/
-
 # Создаем пользователя без root прав
 RUN useradd -m -u 1000 appuser
 
-# Создаем директории с правильными разрешениями
+# Копируем весь проект
+COPY website/ /app/website/
+
+# Создаем директории и устанавливаем права
 RUN mkdir -p /app/website/app/logs && \
     mkdir -p /app/temp && \
+    chown -R appuser:appuser /app/website/app/logs && \
+    chown -R appuser:appuser /app/temp && \
     chown -R appuser:appuser /app && \
-    chmod -R 755 /app && \
     chmod -R 777 /app/website/app/logs && \
     chmod -R 777 /app/temp
 
