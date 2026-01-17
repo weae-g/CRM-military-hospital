@@ -1,0 +1,64 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+website/Lib/
+website/Include/
+website/Scripts/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+website/app/logs/*.log
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Dependencies (они уже есть в контейнере)
+dependencies/
+packages/
+packagespip/
+node_modules/
+
+# Database
+*.db
+*.sqlite
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation
+*.md
+DEPLOY_GUIDE.md
+
+# Backups
+backups/
+*.sql
