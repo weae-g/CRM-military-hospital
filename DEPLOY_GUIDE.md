@@ -187,7 +187,7 @@ nano docker-compose.yml
 volumes:
   - ./nginx.conf:/etc/nginx/nginx.conf:ro
   - ./website/app/static:/var/www/static:ro
-  - /etc/letsencrypt:/etc/letsencrypt:ro  # Добавить эту строку
+  - /etc/letsencrypt:/etc/letsencrypt:ro # Добавить эту строку
 ```
 
 Раскомментируйте HTTPS секцию в `nginx.conf` и обновите пути к сертификатам.
@@ -402,16 +402,19 @@ crontab -e
 ## Системные требования для разных нагрузок
 
 ### Малая нагрузка (до 10 пользователей)
+
 - 2 CPU cores
 - 2GB RAM
 - 20GB HDD
 
 ### Средняя нагрузка (10-50 пользователей)
+
 - 4 CPU cores
 - 4GB RAM
 - 50GB SSD
 
 ### Высокая нагрузка (50+ пользователей)
+
 - 8+ CPU cores
 - 8GB+ RAM
 - 100GB+ SSD
