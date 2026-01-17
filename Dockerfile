@@ -26,14 +26,17 @@ RUN pip install --no-cache-dir uvicorn[standard] gunicorn python-dotenv
 # Копируем весь проект
 COPY website/ /app/website/
 
-# Создаем директорию для логов
-RUN mkdir -p /app/website/app/logs
-
-# Создаем временную директорию для приложения
-RUN mkdir -p /app/temp && chmod 777 /app/temp
-
 # Создаем пользователя без root прав
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+RUN useradd -m -u 1000 appuser
+
+# Создаем директории с правильными разрешениями
+RUN mkdir -p /app/website/app/logs && \
+    mkdir -p /app/temp && \
+    chown -R appuser:appuser /app && \
+    chmod -R 755 /app && \
+    chmod -R 777 /app/website/app/logs && \
+    chmod -R 777 /app/temp
+
 USER appuser
 
 # Открываем порт
