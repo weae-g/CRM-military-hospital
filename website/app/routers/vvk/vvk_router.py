@@ -78,7 +78,7 @@ def delete_vvk(vvk_id: int, db: Session = Depends(get_db)):
 async def read_documents(request: Request):   
     return templates.TemplateResponse("vvk/vvk_table.html", {"request": request})
 
-save_directory = "/temp"
+save_directory = "/app/temp"
 os.makedirs(save_directory, exist_ok=True)  # Создайте директорию, если она не существует
 
 @router.post("/upload/")
